@@ -940,7 +940,7 @@ function saveRound() {
   }
   if(!hasInput) return alert('최소 하나의 스코어를 입력해주세요.');
   const round={
-    date:document.getElementById('roundDate').value||new Date().toISOString().slice(0,10),
+    date:document.getElementById('roundDate').value||getLocalDate(),
     course:document.getElementById('courseName').value||'미입력',
     frontCourse:document.getElementById('courseNameFront').value,
     backCourse:document.getElementById('courseNameBack').value,
@@ -1345,7 +1345,7 @@ function deleteCourse(name){
 function exportData(){
   const b=new Blob([JSON.stringify(DATA,null,2)],{type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(b);
-  a.download=`jb_golf_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(a.href);
+  a.download=`jb_golf_backup_${getLocalDate()}.json`; a.click(); URL.revokeObjectURL(a.href);
 }
 function importData(event){
   const f=event.target.files[0]; if(!f) return;
@@ -1510,7 +1510,7 @@ function showOcrPreview() {
       </div>
       <div class="form-group" style="flex:1; margin-bottom:8px;">
         <label style="font-size:.7rem;">날짜</label>
-        <input type="date" id="ocrDate" value="${new Date().toISOString().slice(0,10)}" style="padding:8px 10px; font-size:.85rem;">
+        <input type="date" id="ocrDate" value="${getLocalDate()}" style="padding:8px 10px; font-size:.85rem;">
       </div>
     </div>
     <div class="form-row" style="gap:8px;">
@@ -1632,7 +1632,7 @@ function updateOcrCourseOptions() {
 function saveOcrRounds() {
   if (!ocrData || !ocrData.players) return;
 
-  const date = document.getElementById('ocrDate').value || new Date().toISOString().slice(0, 10);
+  const date = document.getElementById('ocrDate').value || getLocalDate();
   const courseName = document.getElementById('ocrCourse').value;
   const frontCourse = document.getElementById('ocrFrontCourse').value;
   const backCourse = document.getElementById('ocrBackCourse').value;
@@ -1687,7 +1687,7 @@ function switchTab(tab, fromPopState) {
   currentTab = tab;
   // 기록보기 탭 진입 시 항상 전체 멤버 리스트로 초기화
   if (tab === 'history' && !fromPopState) { historyPlayer = null; renderHistory(); }
-  if (tab === 'record' && !fromPopState) { document.getElementById('roundDate').value = new Date().toISOString().slice(0,10); }
+  if (tab === 'record' && !fromPopState) { document.getElementById('roundDate').value = getLocalDate(); }
   document.querySelectorAll('.tab-btn, .tab-settings').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   var btn = document.querySelector('[data-tab="'+tab+'"]');
@@ -1757,8 +1757,11 @@ history.replaceState({tab:'overview'}, '', '#overview');
 // ══════════════════════════════════════
 // INIT
 // ══════════════════════════════════════
+function getLocalDate() {
+  var d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 function renderAll(){
-  document.getElementById('roundDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('roundDate').value=getLocalDate();
   currentPars={front:[4,4,4,4,4,4,4,4,4],back:[4,4,4,4,4,4,4,4,4]};
   buildScoreGrid('frontGrid','front');
   buildScoreGrid('backGrid','back');
