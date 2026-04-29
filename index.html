@@ -1592,18 +1592,17 @@ function saveOcrRounds() {
   if (!ocrData || !ocrData.players) return;
 
   const date = document.getElementById('ocrDate').value || new Date().toISOString().slice(0, 10);
-  const courseName = document.getElementById('ocrCourse').value || ocrData.course || '미입력';
-  const frontCourse = document.getElementById('ocrFrontCourse').value || '';
-  const backCourse = document.getElementById('ocrBackCourse').value || '';
-  let savedCount = 0;
+  const courseName = document.getElementById('ocrCourse').value;
+  const frontCourse = document.getElementById('ocrFrontCourse').value;
+  const backCourse = document.getElementById('ocrBackCourse').value;
 
-  // 선택된 코스에서 파 가져오기
-  let pars = Array(18).fill(4);
-  if (DATA.courses[courseName]) {
-    const fp = frontCourse && DATA.courses[courseName][frontCourse] ? DATA.courses[courseName][frontCourse] : Array(9).fill(4);
-    const bp = backCourse && DATA.courses[courseName][backCourse] ? DATA.courses[courseName][backCourse] : Array(9).fill(4);
-    pars = [...fp, ...bp];
-  }
+  // 골프장/코스 필수 선택 확인
+  if (!courseName || !DATA.courses[courseName]) return alert('골프장을 선택해주세요.');
+  if (!frontCourse || !DATA.courses[courseName][frontCourse]) return alert('전반 코스를 선택해주세요.');
+  if (!backCourse || !DATA.courses[courseName][backCourse]) return alert('후반 코스를 선택해주세요.');
+
+  let savedCount = 0;
+  const pars = [...DATA.courses[courseName][frontCourse], ...DATA.courses[courseName][backCourse]];
 
   ocrData.players.forEach((p, pi) => {
     // 드롭다운에서 선택된 멤버
