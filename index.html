@@ -1,0 +1,1628 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JB Family Golf</title>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+<style>
+  :root {
+    --green: #2e7d32;
+    --green-light: #4caf50;
+    --green-dark: #1b5e20;
+    --bg: #f5f5f0;
+    --card: #ffffff;
+    --text: #212121;
+    --text-light: #757575;
+    --border: #e0e0e0;
+    --eagle: #ff6f00;
+    --birdie: #039be5;
+    --par: #2e7d32;
+    --bogey: #f9a825;
+    --double: #ef6c00;
+    --over: #c62828;
+    --radius: 12px;
+    --shadow: 0 2px 8px rgba(0,0,0,.08);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:'Segoe UI',-apple-system,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+  header {
+    background:linear-gradient(135deg,var(--green-dark),var(--green));
+    color:#fff; padding:18px 24px; text-align:center;
+    position:sticky; top:0; z-index:100; box-shadow:0 2px 12px rgba(0,0,0,.15);
+  }
+  header h1 { font-size:1.4rem; font-weight:700; }
+  header p { font-size:.8rem; opacity:.8; margin-top:2px; }
+
+  /* Tabs */
+  .tabs {
+    display:flex; align-items:center; background:var(--card);
+    border-bottom:1px solid var(--border); position:sticky; top:62px; z-index:99; box-shadow:var(--shadow);
+  }
+  .tab-btn {
+    flex:1; padding:13px 6px; border:none; background:none;
+    font-size:.82rem; font-weight:600; color:var(--text-light); cursor:pointer;
+    border-bottom:3px solid transparent; transition:all .2s;
+  }
+  .tab-btn.active { color:var(--green); border-bottom-color:var(--green); background:rgba(46,125,50,.05); }
+  .tab-settings {
+    width:48px; padding:12px 0; border:none; background:none; cursor:pointer;
+    font-size:1.2rem; color:var(--text-light); border-bottom:3px solid transparent; transition:all .2s;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .tab-settings.active { color:var(--green); border-bottom-color:var(--green); }
+
+  .section { display:none; padding:16px; max-width:800px; margin:0 auto; }
+  .section.active { display:block; }
+
+  .card {
+    background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:20px; margin-bottom:16px;
+  }
+  .card h3 {
+    font-size:1rem; margin-bottom:14px; color:var(--green-dark);
+    display:flex; align-items:center; gap:8px;
+  }
+
+  .form-group { margin-bottom:14px; }
+  .form-group label {
+    display:block; font-size:.78rem; font-weight:600; color:var(--text-light);
+    margin-bottom:5px; text-transform:uppercase; letter-spacing:.5px;
+  }
+  .form-row { display:flex; gap:12px; }
+  .form-row .form-group { flex:1; }
+  input,select {
+    width:100%; padding:10px 14px; border:1.5px solid var(--border); border-radius:8px;
+    font-size:.95rem; outline:none; transition:border-color .2s; background:#fafafa;
+  }
+  input:focus,select:focus { border-color:var(--green); background:#fff; }
+
+  .btn {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:12px 24px; border:none; border-radius:8px;
+    font-size:.9rem; font-weight:600; cursor:pointer; transition:all .2s;
+  }
+  .btn-primary { background:var(--green); color:#fff; width:100%; justify-content:center; }
+  .btn-primary:hover { background:var(--green-dark); }
+  .btn-danger { background:#ffebee; color:#c62828; padding:8px 16px; font-size:.8rem; }
+  .btn-danger:hover { background:#ffcdd2; }
+  .btn-sm { padding:6px 12px; font-size:.8rem; border-radius:6px; }
+  .btn-outline { background:#fff; color:var(--green); border:1.5px solid var(--green); }
+  .btn-outline:hover { background:#e8f5e9; }
+
+  /* ── Overview Table ── */
+  .overview-table {
+    width:100%; border-collapse:separate; border-spacing:0;
+    border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow);
+    font-size:.85rem; table-layout:fixed;
+  }
+  .overview-table thead th {
+    background:var(--green); color:#fff; padding:12px 6px;
+    font-weight:700; font-size:.72rem; text-transform:uppercase; letter-spacing:.3px;
+    text-align:center; white-space:nowrap;
+  }
+  .overview-table thead th:first-child { text-align:center; }
+  .overview-table tbody tr {
+    background:var(--card); cursor:pointer; transition:background .15s;
+    -webkit-tap-highlight-color:rgba(46,125,50,.1);
+  }
+  .overview-table tbody tr:hover, .overview-table tbody tr:active { background:#f1f8e9; }
+  .overview-table tbody tr:nth-child(even) { background:#fafafa; }
+  .overview-table tbody tr:nth-child(even):hover, .overview-table tbody tr:nth-child(even):active { background:#f1f8e9; }
+  .overview-table td {
+    padding:14px 6px; text-align:center; border-bottom:1px solid var(--border);
+    font-weight:600;
+  }
+  .overview-table td:first-child {
+    text-align:center; font-weight:700; font-size:.9rem;
+  }
+  .overview-table .rank-badge {
+    display:inline-block; width:22px; height:22px; border-radius:50%;
+    font-size:.7rem; font-weight:800; line-height:22px; text-align:center;
+    margin-right:6px;
+  }
+  .rank-1 { background:#ffd600; color:#5d4037; }
+  .rank-2 { background:#bdbdbd; color:#424242; }
+  .rank-3 { background:#a1887f; color:#fff; }
+  .overview-table .net-score { font-size:.75rem; color:var(--text-light); font-weight:400; }
+  .hdcp-col { color:var(--par); }
+  .calc-col { color:var(--green); }
+  .best-col { color:var(--birdie); }
+
+  /* ── Score Grid ── */
+  .score-grid {
+    display:grid; grid-template-columns:48px repeat(9,1fr) 48px;
+    gap:1px; background:var(--border); border-radius:8px; overflow:hidden;
+    font-size:.8rem; margin-bottom:12px;
+  }
+  .score-grid .hdr { background:var(--green); color:#fff; padding:8px 2px; text-align:center; font-weight:700; font-size:.75rem; }
+  .score-grid .par-row { background:#e8f5e9; padding:8px 2px; text-align:center; font-weight:700; font-size:.85rem; color:var(--green-dark); }
+  .score-grid .score-cell { background:#fff; padding:2px; text-align:center; }
+  .score-grid .score-cell input {
+    width:100%; height:36px; padding:0; text-align:center;
+    border:1px solid #e0e0e0; border-radius:4px; font-size:.95rem; font-weight:600;
+    background:#fff; -moz-appearance:textfield;
+  }
+  .score-grid .score-cell input::-webkit-outer-spin-button,
+  .score-grid .score-cell input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+  .score-grid .score-cell input:focus { border-color:var(--green); background:#f1f8e9; outline:none; }
+  .score-grid .subtotal { background:#fff8e1; padding:8px 2px; text-align:center; font-weight:700; color:var(--green-dark); }
+
+  /* ── History ── */
+  .member-row {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:14px 16px; background:var(--card); border-radius:var(--radius);
+    box-shadow:var(--shadow); margin-bottom:8px; cursor:pointer; transition:all .15s;
+  }
+  .member-row:hover { transform:translateY(-1px); background:#f9fdf5; }
+  .member-row .name { font-weight:700; font-size:.95rem; }
+  .member-row .info { font-size:.8rem; color:var(--text-light); }
+
+  .round-item {
+    background:var(--card); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:14px 16px; margin-bottom:10px; cursor:pointer; transition:transform .15s;
+  }
+  .round-item:hover { transform:translateY(-1px); }
+  .round-header { display:flex; justify-content:space-between; align-items:center; }
+  .round-course { font-weight:700; font-size:.9rem; }
+  .round-date { font-size:.78rem; color:var(--text-light); }
+  .round-score-row { display:flex; gap:12px; margin-top:8px; font-size:.83rem; align-items:center; }
+  .round-score-badge { padding:3px 10px; border-radius:16px; font-weight:700; font-size:.85rem; }
+  .score-over { background:#ffebee; color:#c62828; }
+  .score-under { background:#e3f2fd; color:#1565c0; }
+  .score-even { background:#e8f5e9; color:#2e7d32; }
+
+  .back-btn {
+    display:inline-flex; align-items:center; gap:4px;
+    padding:8px 16px; border:none; background:#e8f5e9; color:var(--green);
+    border-radius:8px; font-size:.85rem; font-weight:600; cursor:pointer;
+    margin-bottom:14px;
+  }
+  .back-btn:hover { background:#c8e6c9; }
+
+  /* ── Detail Scorecard ── */
+  .detail-scorecard {
+    display:grid; grid-template-columns:60px repeat(9,1fr) 50px;
+    gap:1px; background:var(--border); border-radius:8px; overflow:hidden;
+    font-size:.75rem; margin:12px 0;
+  }
+  .detail-scorecard > div { padding:6px 3px; text-align:center; background:#fff; }
+  .detail-scorecard input::-webkit-outer-spin-button,
+  .detail-scorecard input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+  .detail-scorecard .lbl { background:#f5f5f5; font-weight:600; text-align:left; padding-left:8px; }
+  .hole-eagle { background:#fff3e0!important; color:var(--eagle); font-weight:700; }
+  .hole-birdie { background:#e1f5fe!important; color:var(--birdie); font-weight:700; }
+  .hole-par { background:#e8f5e9!important; color:var(--par); font-weight:700; }
+  .hole-bogey { background:#fffde7!important; color:#f57f17; font-weight:700; }
+  .hole-double { background:#fff3e0!important; color:var(--double); font-weight:700; }
+  .hole-over { background:#ffebee!important; color:var(--over); font-weight:700; }
+
+  /* ── Dist bars ── */
+  .dist-bar-container { margin:6px 0; }
+  .dist-label { display:flex; justify-content:space-between; font-size:.8rem; margin-bottom:3px; }
+  .dist-bar-bg { height:8px; background:#eee; border-radius:4px; overflow:hidden; }
+  .dist-bar-fill { height:100%; border-radius:4px; transition:width .5s; }
+
+  /* ── Chart ── */
+  .chart-container { width:100%; height:200px; margin:12px 0; }
+  .chart-svg { width:100%; height:100%; }
+  .chart-line { fill:none; stroke:var(--green); stroke-width:2.5; }
+  .chart-dot { fill:var(--green); }
+  .chart-grid { stroke:#e0e0e0; stroke-width:.5; }
+  .chart-label { font-size:11px; fill:#999; }
+  .chart-area { fill:url(#chartGradient); opacity:.3; }
+
+  /* Auto-fill badge */
+  .auto-fill-badge {
+    display:inline-block; padding:2px 8px; background:#e8f5e9;
+    color:var(--green); font-size:.7rem; font-weight:600; border-radius:10px; margin-left:8px;
+  }
+
+  /* Course settings */
+  .course-item { border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:10px; }
+  .course-item-header { display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+  .course-item-header h4 { font-size:.9rem; margin:0; }
+  .course-item-body { display:none; margin-top:12px; }
+  .course-item.open .course-item-body { display:block; }
+  .par-edit-grid {
+    display:grid; grid-template-columns:70px repeat(9,1fr) 50px;
+    gap:2px; font-size:.8rem; margin:8px 0;
+  }
+  .par-edit-grid > div { text-align:center; padding:4px 2px; }
+  .par-edit-grid .pe-hdr { font-weight:700; font-size:.7rem; color:var(--text-light); }
+  .par-edit-grid .pe-lbl { font-weight:600; text-align:left; padding-left:4px; background:#f5f5f5; border-radius:4px; }
+  .par-edit-grid input { padding:5px 2px; text-align:center; font-size:.8rem; border:1px solid var(--border); border-radius:4px; }
+  .par-edit-grid .pe-sum { font-weight:700; background:#e8f5e9; border-radius:4px; display:flex; align-items:center; justify-content:center; }
+
+  /* Modal */
+  .modal-overlay {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,.5);
+    z-index:200; justify-content:center; align-items:center; padding:16px;
+  }
+  .modal-overlay.show { display:flex; }
+  .modal {
+    background:var(--card); border-radius:var(--radius); padding:24px;
+    width:100%; max-width:600px; max-height:85vh; overflow-y:auto;
+    box-shadow:0 8px 32px rgba(0,0,0,.2);
+  }
+  .modal h3 { margin-bottom:16px; }
+  .modal-actions { display:flex; gap:8px; margin-top:18px; justify-content:flex-end; }
+
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .ocr-player-card {
+    border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:10px;
+  }
+  .ocr-player-card.matched { border-color:var(--green); background:#f9fdf5; }
+  .ocr-player-card.unmatched { border-color:#e0e0e0; background:#fafafa; opacity:.6; }
+  .ocr-player-name { font-weight:700; font-size:.9rem; margin-bottom:6px; }
+  .ocr-scores { display:flex; gap:4px; flex-wrap:wrap; font-size:.8rem; }
+  .ocr-scores span {
+    width:28px; height:28px; display:flex; align-items:center; justify-content:center;
+    border-radius:4px; font-weight:600;
+  }
+  .ocr-match-badge {
+    display:inline-block; padding:2px 8px; border-radius:10px; font-size:.7rem; font-weight:600; margin-left:8px;
+  }
+  .ocr-match-badge.ok { background:#e8f5e9; color:var(--green); }
+  .ocr-match-badge.no { background:#f5f5f5; color:var(--text-light); }
+
+  .empty-state { text-align:center; padding:40px 20px; color:var(--text-light); }
+  .empty-state .icon { font-size:3rem; margin-bottom:12px; }
+
+  /* Mobile-first optimizations */
+  @media (max-width:640px) {
+    header { padding:14px 16px; }
+    header h1 { font-size:1.2rem; }
+    .tabs { top:52px; }
+    .tab-btn { padding:11px 4px; font-size:.78rem; }
+    .tab-settings { width:42px; font-size:1.1rem; }
+    .section { padding:10px; }
+    .card { padding:14px; margin-bottom:12px; }
+
+    .form-row { flex-direction:column; gap:0; }
+    input,select { padding:10px 12px; font-size:1rem; }
+
+    .score-grid { grid-template-columns:36px repeat(9,1fr) 36px; font-size:.7rem; }
+    .score-grid .hdr { padding:6px 1px; font-size:.65rem; }
+    .score-grid .par-row { padding:6px 1px; font-size:.75rem; }
+    .score-grid .score-cell input { height:34px; font-size:.9rem; }
+    .score-grid .subtotal { font-size:.8rem; }
+
+    .overview-table { font-size:.8rem; }
+    .overview-table thead th { padding:10px 3px; font-size:.65rem; letter-spacing:0; }
+    .overview-table td { padding:12px 3px; }
+    .overview-table td:first-child { font-size:.85rem; }
+    .rank-badge { width:18px; height:18px; line-height:18px; font-size:.6rem; margin-right:3px; }
+
+    .member-row { padding:12px 14px; }
+    .round-item { padding:12px 14px; }
+
+    .detail-scorecard { grid-template-columns:44px repeat(9,1fr) 38px; font-size:.65rem; }
+    .detail-scorecard > div { padding:5px 2px; }
+    .detail-scorecard .lbl { padding-left:4px; }
+
+    .modal { padding:18px; max-height:90vh; }
+    .par-edit-grid { grid-template-columns:50px repeat(9,1fr) 36px; font-size:.7rem; }
+    .par-edit-grid input { padding:4px 1px; font-size:.75rem; }
+  }
+
+  /* Extra small phones */
+  @media (max-width:380px) {
+    .score-grid { grid-template-columns:30px repeat(9,1fr) 30px; }
+    .score-grid .hdr { font-size:.6rem; padding:5px 0; }
+    .score-grid .score-cell input { height:30px; font-size:.8rem; }
+    .overview-table td:first-child { font-size:.8rem; }
+    .detail-scorecard { grid-template-columns:36px repeat(9,1fr) 32px; font-size:.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>JB Family Golf</h1>
+  <p>Score & Handicap Tracker</p>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" data-tab="overview">스코어 현황</button>
+  <button class="tab-btn" data-tab="history">기록 보기</button>
+  <button class="tab-btn" data-tab="record">스코어 입력</button>
+  <button class="tab-settings" data-tab="settings" title="설정">&#9881;</button>
+</div>
+
+<!-- 1. Overview -->
+<div class="section active" id="sec-overview">
+  <table class="overview-table" id="overviewTable"></table>
+</div>
+
+<!-- 2. Score Entry -->
+<div class="section" id="sec-record">
+  <!-- Scorecard Upload -->
+  <div class="card" style="border:2px dashed var(--green-light); background:#f9fdf5;">
+    <div style="text-align:center;">
+      <div style="font-size:1.5rem; margin-bottom:6px;">&#128247;</div>
+      <div style="font-weight:700; font-size:.95rem; color:var(--green-dark);">스코어카드 사진으로 입력</div>
+      <p style="font-size:.78rem; color:var(--text-light); margin:6px 0 12px;">스코어카드를 촬영하거나 업로드하면 자동 인식합니다</p>
+      <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap;">
+        <label class="btn btn-primary btn-sm" style="width:auto; cursor:pointer;">
+          &#128247; 촬영
+          <input type="file" accept="image/*" capture="environment" style="display:none;" onchange="handleScorecardUpload(event)">
+        </label>
+        <label class="btn btn-outline btn-sm" style="cursor:pointer;">
+          &#128193; 사진 선택
+          <input type="file" accept="image/*" style="display:none;" onchange="handleScorecardUpload(event)">
+        </label>
+      </div>
+      <div id="ocrStatus" style="display:none; margin-top:12px; font-size:.85rem; color:var(--green);">
+        <span id="ocrSpinner" style="display:inline-block; animation:spin 1s linear infinite;">&#9881;</span>
+        스코어카드 분석 중...
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center; color:var(--text-light); font-size:.8rem; margin:-6px 0 10px;">또는 수동 입력 &#9660;</div>
+
+  <div class="card">
+    <h3>라운드 정보</h3>
+    <div class="form-row">
+      <div class="form-group">
+        <label>기록 대상</label>
+        <select id="recordPlayer"></select>
+      </div>
+      <div class="form-group">
+        <label>날짜</label>
+        <input type="date" id="roundDate">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>골프장</label>
+        <select id="courseName" onchange="onCourseChange()">
+          <option value="">-- 골프장 선택 --</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>코스 (전반)</label>
+        <select id="courseNameFront" onchange="onSubCourseChange()"><option value="">-- 코스 선택 --</option></select>
+      </div>
+      <div class="form-group">
+        <label>코스 (후반)</label>
+        <select id="courseNameBack" onchange="onSubCourseChange()"><option value="">-- 코스 선택 --</option></select>
+      </div>
+    </div>
+    <div id="parAutoFillMsg" style="display:none; font-size:.8rem; color:var(--green); margin-top:-6px; margin-bottom:8px;">
+      Par가 자동으로 설정되었습니다.
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>전반 (Front 9) <span id="frontCourseBadge"></span></h3>
+    <div class="score-grid" id="frontGrid"></div>
+  </div>
+  <div class="card">
+    <h3>후반 (Back 9) <span id="backCourseBadge"></span></h3>
+    <div class="score-grid" id="backGrid"></div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex; justify-content:space-between; align-items:center; font-size:.95rem;">
+      <span style="font-weight:700;">전반</span>
+      <span id="frontTotal" style="font-weight:800; color:var(--green);">0</span>
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; font-size:.95rem; margin-top:8px;">
+      <span style="font-weight:700;">후반</span>
+      <span id="backTotal" style="font-weight:800; color:var(--green);">0</span>
+    </div>
+    <hr style="margin:12px 0; border:none; border-top:1px solid var(--border);">
+    <div style="display:flex; justify-content:space-between; align-items:center; font-size:1.1rem;">
+      <span style="font-weight:800;">총 스코어</span>
+      <span id="totalScore" style="font-weight:900; font-size:1.4rem; color:var(--green);">0</span>
+    </div>
+    <div style="text-align:center; margin-top:4px;">
+      <span id="totalVsPar" style="font-size:.85rem; color:var(--text-light);"></span>
+    </div>
+  </div>
+  <button class="btn btn-primary" onclick="saveRound()">라운드 저장</button>
+</div>
+
+<!-- 3. History -->
+<div class="section" id="sec-history">
+  <div id="historyContent"></div>
+</div>
+
+<!-- 4. Settings -->
+<div class="section" id="sec-settings">
+  <div class="card">
+    <h3>플레이어 관리</h3>
+    <div id="playerList" style="margin-bottom:14px;"></div>
+    <div class="form-row">
+      <div class="form-group" style="flex:3;">
+        <input type="text" id="newPlayerName" placeholder="새 플레이어 이름">
+      </div>
+      <div class="form-group" style="flex:1; display:flex; align-items:flex-end;">
+        <button class="btn btn-primary btn-sm" style="width:100%;" onclick="addPlayer()">추가</button>
+      </div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>골프장 관리</h3>
+    <p style="font-size:.8rem; color:var(--text-light); margin-bottom:14px;">
+      골프장과 코스별 홀 파를 등록하면 스코어 입력 시 자동으로 파가 설정됩니다.
+    </p>
+    <div id="courseSettingsList"></div>
+    <button class="btn btn-outline btn-sm" style="width:100%; margin-top:8px;" onclick="openAddCourseModal()">+ 새 골프장 추가</button>
+  </div>
+  <div class="card admin-only" style="display:none;">
+    <h3>스코어카드 인식 (Gemini API)</h3>
+    <div class="form-group">
+      <label>Gemini API Key</label>
+      <input type="password" id="geminiApiKey" placeholder="API 키 입력"
+        onchange="DATA.geminiApiKey=this.value;saveData();">
+    </div>
+    <p style="font-size:.75rem; color:var(--text-light);">
+      Google AI Studio에서 발급받은 Gemini API 키를 입력하면 스코어카드 사진 인식 기능을 사용할 수 있습니다.
+    </p>
+  </div>
+  <div class="card">
+    <h3>데이터 관리</h3>
+    <div style="display:flex; gap:8px; flex-wrap:wrap;">
+      <button class="btn btn-outline btn-sm" onclick="exportData()">데이터 내보내기 (JSON)</button>
+      <label class="btn btn-outline btn-sm" style="cursor:pointer;">
+        데이터 가져오기
+        <input type="file" accept=".json" style="display:none;" onchange="importData(event)">
+      </label>
+    </div>
+    <div style="margin-top:16px;">
+      <button class="btn btn-danger" onclick="resetData()">모든 데이터 초기화</button>
+    </div>
+  </div>
+</div>
+
+<!-- Round Detail Modal -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal">
+    <h3 id="detailTitle">라운드 상세</h3>
+    <div id="detailContent"></div>
+    <div class="modal-actions" id="detailActions">
+      <button class="btn btn-danger btn-sm" id="detailDeleteBtn">삭제</button>
+      <button class="btn btn-outline btn-sm" id="detailEditBtn">수정</button>
+      <button class="btn btn-outline btn-sm" onclick="closeModal('detailModal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<!-- Course Modal -->
+<div class="modal-overlay" id="courseModal">
+  <div class="modal" style="max-width:700px;">
+    <h3 id="courseModalTitle">골프장 추가</h3>
+    <div class="form-group">
+      <label>골프장 이름</label>
+      <input type="text" id="courseModalName" placeholder="예: 남서울CC">
+    </div>
+    <div id="courseModalCourses"></div>
+    <button class="btn btn-outline btn-sm" style="margin-top:8px;" onclick="addCourseRow()">+ 코스 추가</button>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('courseModal')">취소</button>
+      <button class="btn btn-primary btn-sm" onclick="saveCourseModal()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- OCR Preview Modal -->
+<div class="modal-overlay" id="ocrModal">
+  <div class="modal" style="max-width:700px;">
+    <h3>스코어카드 인식 결과</h3>
+    <div id="ocrInfo" style="font-size:.85rem; color:var(--text-light); margin-bottom:12px;"></div>
+    <div id="ocrPreview"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('ocrModal')">취소</button>
+      <button class="btn btn-primary btn-sm" style="width:auto;" id="ocrSaveBtn" onclick="saveOcrRounds()">일괄 저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- Player Detail Modal (individual stats from overview click) -->
+<div class="modal-overlay" id="playerStatsModal">
+  <div class="modal" style="max-width:650px;">
+    <h3 id="playerStatsTitle">개인 통계</h3>
+    <div id="playerStatsContent"></div>
+    <div class="modal-actions">
+      <button class="btn btn-outline btn-sm" onclick="closeModal('playerStatsModal')">닫기</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// FIREBASE
+// ══════════════════════════════════════
+firebase.initializeApp({
+  apiKey: "AIzaSyDMvA3CsVNS6O17zrAfxPuRlzu-EIbD-P0",
+  authDomain: "jb-family-golf.firebaseapp.com",
+  databaseURL: "https://jb-family-golf-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "jb-family-golf",
+  storageBucket: "jb-family-golf.firebasestorage.app",
+  messagingSenderId: "1073812846696",
+  appId: "1:1073812846696:web:6437141a9be7f2b39ba3dd"
+});
+const db = firebase.database();
+let firebaseReady = false;
+let skipNextFirebaseUpdate = false;
+
+// ══════════════════════════════════════
+// DATA LAYER
+// ══════════════════════════════════════
+const STORAGE_KEY = 'jb_family_golf';
+const DEFAULT_PLAYERS = ['정석','슬기','상훈','문정','제원','수지','종민','지현'];
+const DEFAULT_HANDICAPS = {
+  '정석':16,'슬기':9,'상훈':16,'문정':20,'제원':16,'수지':32,'종민':18,'지현':30
+};
+const DEFAULT_COURSES = {
+  'Horizon Hills G&CC': {
+    'Front 9 (OUT)': [4,5,3,4,4,5,4,3,4],
+    'Back 9 (IN)':  [4,4,3,5,4,4,4,3,5]
+  },
+  'Kukup Golf Resort': {
+    'Front 9 (OUT)': [4,4,5,4,3,4,4,3,5],
+    'Back 9 (IN)':  [5,4,4,3,4,4,3,4,5]
+  },
+  'IOI Palm Villa': {
+    'IOI Course':   [5,4,3,4,4,4,3,4,5],
+    'Palm Course':  [4,5,3,4,4,3,4,3,6],
+    'Putra Course': [4,4,3,4,5,4,4,3,4]
+  }
+};
+
+let DATA = loadData();
+
+function getDefaultData() {
+  const rounds = {};
+  DEFAULT_PLAYERS.forEach(p => rounds[p] = []);
+  return {
+    players: [...DEFAULT_PLAYERS],
+    courses: JSON.parse(JSON.stringify(DEFAULT_COURSES)),
+    handicaps: JSON.parse(JSON.stringify(DEFAULT_HANDICAPS)),
+    geminiApiKey: 'AIzaSyBy5OtlKCl66QWUIqeer-pFGBROAs1d7Dc',
+    rounds
+  };
+}
+
+function loadData() {
+  // localStorage에서 먼저 로드 (빠른 초기 렌더링)
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if (raw) {
+    const d = JSON.parse(raw);
+    if (!d.courses) d.courses = {};
+    if (!d.handicaps) d.handicaps = {};
+    return d;
+  }
+  return getDefaultData();
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+  // Firebase에 동기화
+  skipNextFirebaseUpdate = true;
+  db.ref('data').set(DATA).catch(err => console.warn('Firebase 저장 실패:', err));
+}
+
+// Firebase 실시간 동기화
+db.ref('data').on('value', snapshot => {
+  const val = snapshot.val();
+  if (skipNextFirebaseUpdate) { skipNextFirebaseUpdate = false; return; }
+  if (val) {
+    if (!val.courses) val.courses = {};
+    if (!val.handicaps) val.handicaps = {};
+    if (!val.rounds) val.rounds = {};
+    if (!val.players) val.players = [...DEFAULT_PLAYERS];
+    DATA = val;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+    if (firebaseReady) renderAll();
+  } else {
+    // Firebase 비어있음 → 기본 데이터 업로드
+    db.ref('data').set(DATA);
+  }
+  firebaseReady = true;
+});
+function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function escAttr(s) { return s.replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
+
+// ══════════════════════════════════════
+// OVERVIEW (메인 - 전체 현황)
+// ══════════════════════════════════════
+function renderOverview() {
+  const tbl = document.getElementById('overviewTable');
+  let html = `<thead><tr>
+    <th>이름</th><th>핸디캡</th><th>산출<br>핸디캡</th><th>평균</th><th>베스트</th><th>라운드</th>
+  </tr></thead><tbody>`;
+
+  // 순위: 핸디캡 - 산출핸디캡 차이가 가장 작은 순 (잘 치는 사람)
+  const stats = DATA.players.map(name => {
+    const rounds = DATA.rounds[name] || [];
+    const totals = rounds.map(r => r.scores.reduce((a,b)=>a+b,0));
+    const pars = rounds.map(r => r.pars.reduce((a,b)=>a+b,0));
+    const avg = totals.length ? (totals.reduce((a,b)=>a+b,0)/totals.length) : null;
+    const avgOver = totals.length ? Math.round(avg - (pars.reduce((a,b)=>a+b,0)/pars.length)) : null;
+    const best = totals.length ? Math.min(...totals) : null;
+    const bestIdx = best !== null ? totals.indexOf(best) : -1;
+    const bestOver = bestIdx >= 0 ? best - pars[bestIdx] : null;
+    const calcHdcp = calcHandicap(rounds);
+    const hdcp = DATA.handicaps[name] !== undefined ? DATA.handicaps[name] : null;
+    let gap = 999;
+    if (hdcp !== null && calcHdcp !== null) gap = calcHdcp - hdcp;
+    return { name, avg, avgOver, best, bestOver, count: rounds.length, calcHdcp, hdcp, gap };
+  });
+  stats.sort((a,b) => a.gap - b.gap);
+
+  stats.forEach((s, i) => {
+    const hasData = s.count > 0 && s.hdcp !== null && s.calcHdcp !== null;
+    const rankBadge = hasData && i < 3
+      ? `<span class="rank-badge rank-${i+1}">${i+1}</span>` : '';
+    const avgStr = s.avgOver !== null ? s.avgOver : '-';
+    const calcStr = s.calcHdcp !== null ? Math.round(s.calcHdcp) : '-';
+    const hdcpStr = s.hdcp !== null ? s.hdcp : '-';
+    const bestStr = s.bestOver !== null ? s.bestOver : '-';
+
+    html += `<tr onclick="showPlayerStats('${escAttr(s.name)}')">
+      <td>${rankBadge}${esc(s.name)}</td>
+      <td class="hdcp-col">${hdcpStr}</td>
+      <td class="calc-col">${calcStr}</td>
+      <td>${avgStr}</td>
+      <td class="best-col">${bestStr}</td>
+      <td style="color:var(--text-light); font-weight:400;">${s.count}</td>
+    </tr>`;
+  });
+  html += '</tbody>';
+  tbl.innerHTML = html;
+}
+
+function calcHandicap(rounds) {
+  if (!rounds || rounds.length === 0) return null;
+  const diffs = rounds.map(r => {
+    const total = r.scores.reduce((a,b)=>a+b,0);
+    const par = r.pars.reduce((a,b)=>a+b,0);
+    return total - par;
+  });
+  const n = diffs.length;
+  if (n >= 20) {
+    const sorted = [...diffs].slice(0,20).sort((a,b)=>a-b);
+    return sorted.slice(0,8).reduce((a,b)=>a+b,0)/8;
+  } else if (n >= 5) {
+    const map = {5:1,6:2,7:2,8:2,9:3,10:3,11:3,12:4,13:4,14:4,15:5,16:5,17:6,18:6,19:7};
+    const useN = map[n] || Math.floor(n*.4);
+    const sorted = [...diffs].sort((a,b)=>a-b);
+    return sorted.slice(0,useN).reduce((a,b)=>a+b,0)/useN;
+  } else {
+    return [...diffs].sort((a,b)=>a-b)[0] - 2;
+  }
+}
+
+// Player stats modal (from overview row click)
+function showPlayerStats(name) {
+  const rounds = DATA.rounds[name] || [];
+  document.getElementById('playerStatsTitle').textContent = `${name} - 개인 통계`;
+  let html = '';
+
+  if (rounds.length === 0) {
+    html = '<div class="empty-state"><p>기록된 라운드가 없습니다.</p></div>';
+  } else {
+    const totals = rounds.map(r => r.scores.reduce((a,b)=>a+b,0));
+    const parsArr = rounds.map(r => r.pars.reduce((a,b)=>a+b,0));
+    const avg = totals.reduce((a,b)=>a+b,0)/totals.length;
+    const avgPar = parsArr.reduce((a,b)=>a+b,0)/parsArr.length;
+    const avgOver = Math.round(avg - avgPar);
+    const best = Math.min(...totals);
+    const bestIdx = totals.indexOf(best);
+    const bestOver = best - parsArr[bestIdx];
+    const n = rounds.length;
+    const hdcp = DATA.handicaps[name] !== undefined ? DATA.handicaps[name] : '-';
+    const calcH = calcHandicap(rounds);
+
+    html += `<div style="display:flex; gap:12px; margin-bottom:16px; text-align:center;">
+      <div style="flex:1; background:#f5f5f5; border-radius:8px; padding:12px;">
+        <div style="font-size:1.6rem; font-weight:800; color:var(--par);">${hdcp}</div>
+        <div style="font-size:.7rem; color:var(--text-light); margin-top:2px;">핸디캡</div>
+      </div>
+      <div style="flex:1; background:#f5f5f5; border-radius:8px; padding:12px;">
+        <div style="font-size:1.6rem; font-weight:800; color:var(--green);">${calcH !== null ? Math.round(calcH) : '-'}</div>
+        <div style="font-size:.7rem; color:var(--text-light); margin-top:2px;">산출</div>
+      </div>
+      <div style="flex:1; background:#f5f5f5; border-radius:8px; padding:12px;">
+        <div style="font-size:1.4rem; font-weight:800;">${avgOver}<span style="font-size:.85rem; font-weight:600; color:var(--text-light);">(${Math.round(avg)})</span></div>
+        <div style="font-size:.7rem; color:var(--text-light); margin-top:2px;">평균</div>
+      </div>
+      <div style="flex:1; background:#f5f5f5; border-radius:8px; padding:12px;">
+        <div style="font-size:1.4rem; font-weight:800; color:var(--birdie);">${bestOver}<span style="font-size:.85rem; font-weight:600; color:var(--text-light);">(${best})</span></div>
+        <div style="font-size:.7rem; color:var(--text-light); margin-top:2px;">베스트</div>
+      </div>
+    </div>`;
+
+    // Score trend
+    if (n >= 2) {
+      html += '<div style="font-weight:700; font-size:.85rem; margin-bottom:4px;">스코어 추이</div>';
+      html += `<div class="chart-container"><svg class="chart-svg" id="modalTrendChart"></svg></div>`;
+    }
+
+    // Score distribution
+    const allB = {eagle:0,birdie:0,par:0,bogey:0,double:0,over:0};
+    let totalPlayed = 0;
+    rounds.forEach(r => {
+      const b = getScoreBreakdown(r);
+      Object.keys(b).forEach(k => allB[k] += b[k]);
+      totalPlayed += r.scores.filter(s=>s>0).length;
+    });
+    const cats = [
+      {key:'eagle',label:'Eagle 이하',color:'var(--eagle)'},
+      {key:'birdie',label:'Birdie',color:'var(--birdie)'},
+      {key:'par',label:'Par',color:'var(--par)'},
+      {key:'bogey',label:'Bogey',color:'var(--bogey)'},
+      {key:'double',label:'Double Bogey',color:'var(--double)'},
+      {key:'over',label:'Triple+',color:'var(--over)'}
+    ];
+    html += '<div style="font-weight:700; font-size:.85rem; margin:12px 0 6px;">스코어 분포</div>';
+    cats.forEach(c => {
+      const pct = totalPlayed > 0 ? (allB[c.key]/totalPlayed*100).toFixed(1) : 0;
+      html += `<div class="dist-bar-container">
+        <div class="dist-label"><span>${c.label}</span><span>${allB[c.key]}개 (${pct}%)</span></div>
+        <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${pct}%; background:${c.color};"></div></div>
+      </div>`;
+    });
+  }
+
+  document.getElementById('playerStatsContent').innerHTML = html;
+  openModal('playerStatsModal');
+
+  // Render chart after DOM update
+  if (rounds.length >= 2) {
+    setTimeout(() => renderTrendChart(rounds, 'modalTrendChart'), 50);
+  }
+}
+
+// ══════════════════════════════════════
+// SCORE ENTRY
+// ══════════════════════════════════════
+let currentPars = { front:[4,4,4,4,4,4,4,4,4], back:[4,4,4,4,4,4,4,4,4] };
+
+function renderRecordPlayerSelect() {
+  const sel = document.getElementById('recordPlayer');
+  sel.innerHTML = DATA.players.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+}
+
+function renderCourseSelect() {
+  const sel = document.getElementById('courseName');
+  const prev = sel.value;
+  sel.innerHTML = '<option value="">-- 골프장 선택 --</option>';
+  Object.keys(DATA.courses||{}).forEach(name => {
+    sel.innerHTML += `<option value="${esc(name)}">${esc(name)}</option>`;
+  });
+  if (prev && DATA.courses[prev]) sel.value = prev;
+}
+
+function onCourseChange() {
+  const courseName = document.getElementById('courseName').value;
+  const fSel = document.getElementById('courseNameFront');
+  const bSel = document.getElementById('courseNameBack');
+  fSel.innerHTML = '<option value="">-- 코스 선택 --</option>';
+  bSel.innerHTML = '<option value="">-- 코스 선택 --</option>';
+  if (courseName && DATA.courses[courseName]) {
+    const subs = Object.keys(DATA.courses[courseName]);
+    subs.forEach(n => {
+      fSel.innerHTML += `<option value="${esc(n)}">${esc(n)}</option>`;
+      bSel.innerHTML += `<option value="${esc(n)}">${esc(n)}</option>`;
+    });
+    if (subs.length >= 2) { fSel.value=subs[0]; bSel.value=subs[1]; }
+    else if (subs.length===1) { fSel.value=subs[0]; bSel.value=subs[0]; }
+    onSubCourseChange();
+  } else {
+    document.getElementById('parAutoFillMsg').style.display='none';
+    document.getElementById('frontCourseBadge').innerHTML='';
+    document.getElementById('backCourseBadge').innerHTML='';
+  }
+}
+
+function onSubCourseChange() {
+  const cn = document.getElementById('courseName').value;
+  const fc = document.getElementById('courseNameFront').value;
+  const bc = document.getElementById('courseNameBack').value;
+  let filled = false;
+  if (cn && fc && DATA.courses[cn] && DATA.courses[cn][fc]) {
+    currentPars.front = [...DATA.courses[cn][fc]];
+    buildScoreGrid('frontGrid','front');
+    document.getElementById('frontCourseBadge').innerHTML = `<span class="auto-fill-badge">${esc(fc)}</span>`;
+    filled = true;
+  } else { document.getElementById('frontCourseBadge').innerHTML=''; }
+  if (cn && bc && DATA.courses[cn] && DATA.courses[cn][bc]) {
+    currentPars.back = [...DATA.courses[cn][bc]];
+    buildScoreGrid('backGrid','back');
+    document.getElementById('backCourseBadge').innerHTML = `<span class="auto-fill-badge">${esc(bc)}</span>`;
+    filled = true;
+  } else { document.getElementById('backCourseBadge').innerHTML=''; }
+  document.getElementById('parAutoFillMsg').style.display = filled ? 'block' : 'none';
+  calcTotals();
+}
+
+function buildScoreGrid(containerId, half) {
+  const container = document.getElementById(containerId);
+  const pars = half==='front' ? currentPars.front : currentPars.back;
+  const startHole = half==='front' ? 1 : 10;
+  const saved = [];
+  for (let i=0;i<9;i++) { const el=document.getElementById(`${half}Score${i}`); saved.push(el?el.value:''); }
+
+  let html = '<div class="hdr">Hole</div>';
+  for (let i=0;i<9;i++) html += `<div class="hdr">${startHole+i}</div>`;
+  html += '<div class="hdr">계</div>';
+  html += '<div class="par-row" style="background:#c8e6c9;">PAR</div>';
+  for (let i=0;i<9;i++) html += `<div class="par-row">${pars[i]}</div>`;
+  html += `<div class="par-row" style="background:#c8e6c9;">${pars.reduce((a,b)=>a+b,0)}</div>`;
+  html += '<div class="score-cell" style="background:#f5f5f5; font-weight:600; padding:8px 2px; font-size:.7rem; color:var(--text-light);">+/-</div>';
+  for (let i=0;i<9;i++) html += `<div class="score-cell"><input type="number" min="-3" max="9" id="${half}Score${i}" inputmode="numeric" oninput="calcTotals()" onfocus="this.select()" placeholder="0"></div>`;
+  html += `<div class="subtotal" id="${half}Sub">-</div>`;
+  container.innerHTML = html;
+  for (let i=0;i<9;i++) { if(saved[i]) document.getElementById(`${half}Score${i}`).value=saved[i]; }
+}
+
+function calcTotals() {
+  let fOver=0,bOver=0,fHasInput=false,bHasInput=false;
+  for (let i=0;i<9;i++) {
+    const v=document.getElementById(`frontScore${i}`).value;
+    if(v!==''){fOver+=parseInt(v)||0; fHasInput=true;}
+  }
+  for (let i=0;i<9;i++) {
+    const v=document.getElementById(`backScore${i}`).value;
+    if(v!==''){bOver+=parseInt(v)||0; bHasInput=true;}
+  }
+  const fPar=currentPars.front.reduce((a,b)=>a+b,0);
+  const bPar=currentPars.back.reduce((a,b)=>a+b,0);
+  const fActual=fHasInput?fPar+fOver:0;
+  const bActual=bHasInput?bPar+bOver:0;
+
+  document.getElementById('frontSub').textContent=fHasInput?fActual:'-';
+  document.getElementById('backSub').textContent=bHasInput?bActual:'-';
+  document.getElementById('frontTotal').textContent=fActual||0;
+  document.getElementById('backTotal').textContent=bActual||0;
+  const total=fActual+bActual;
+  document.getElementById('totalScore').textContent=total||0;
+  const tp=fPar+bPar;
+  const diff=fOver+bOver;
+  const el=document.getElementById('totalVsPar');
+  if(fHasInput||bHasInput){
+    if(diff>0) el.textContent=`+${diff} (Par ${tp})`;
+    else if(diff<0) el.textContent=`${diff} (Par ${tp})`;
+    else el.textContent=`Even (Par ${tp})`;
+  } else el.textContent=`Par ${tp}`;
+}
+
+function saveRound() {
+  const player = document.getElementById('recordPlayer').value;
+  const pars=[...currentPars.front,...currentPars.back];
+  const scores=[];
+  let hasInput=false;
+  // 오버타수 → 실제 스코어 변환 (입력값 + 파)
+  for(let i=0;i<9;i++){
+    const el=document.getElementById(`frontScore${i}`);
+    if(el.value!==''){scores.push(pars[i]+(parseInt(el.value)||0));hasInput=true;}
+    else scores.push(0);
+  }
+  for(let i=0;i<9;i++){
+    const el=document.getElementById(`backScore${i}`);
+    if(el.value!==''){scores.push(pars[9+i]+(parseInt(el.value)||0));hasInput=true;}
+    else scores.push(0);
+  }
+  if(!hasInput) return alert('최소 하나의 스코어를 입력해주세요.');
+  const round={
+    date:document.getElementById('roundDate').value||new Date().toISOString().slice(0,10),
+    course:document.getElementById('courseName').value||'미입력',
+    frontCourse:document.getElementById('courseNameFront').value,
+    backCourse:document.getElementById('courseNameBack').value,
+    pars,scores,createdAt:Date.now()
+  };
+  if(!DATA.rounds[player]) DATA.rounds[player]=[];
+  DATA.rounds[player].push(round);
+  DATA.rounds[player].sort((a,b)=>b.date.localeCompare(a.date));
+  saveData();
+  for(let i=0;i<9;i++){document.getElementById(`frontScore${i}`).value='';document.getElementById(`backScore${i}`).value='';}
+  calcTotals();
+  alert(`${player}님의 라운드가 저장되었습니다!`);
+  renderOverview();
+}
+
+// ══════════════════════════════════════
+// HISTORY
+// ══════════════════════════════════════
+let historyPlayer = null;
+
+function renderHistory() {
+  const container = document.getElementById('historyContent');
+  if (!historyPlayer) {
+    // Member list
+    let html = '';
+    DATA.players.forEach(name => {
+      const rounds = DATA.rounds[name]||[];
+      const cnt = rounds.length;
+      const lastDate = cnt > 0 ? rounds[0].date : '';
+      const avg = cnt > 0 ? (rounds.map(r=>r.scores.reduce((a,b)=>a+b,0)).reduce((a,b)=>a+b,0)/cnt).toFixed(1) : '-';
+      html += `<div class="member-row" onclick="showPlayerHistory('${escAttr(name)}')">
+        <div>
+          <div class="name">${esc(name)}</div>
+          <div class="info">${cnt}라운드${lastDate ? ' / 최근 '+lastDate : ''}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-weight:700; font-size:1.1rem; color:var(--green);">${avg}</div>
+          <div style="font-size:.7rem; color:var(--text-light);">평균</div>
+        </div>
+      </div>`;
+    });
+    container.innerHTML = html;
+  } else {
+    // Individual history
+    const rounds = DATA.rounds[historyPlayer]||[];
+    let html = `<button class="back-btn" onclick="historyPlayer=null;renderHistory();">&#9664; 전체 멤버</button>`;
+    html += `<div style="font-size:1.1rem; font-weight:800; margin-bottom:14px;">${esc(historyPlayer)}의 기록</div>`;
+    if (rounds.length===0) {
+      html += '<div class="empty-state"><p>기록된 라운드가 없습니다.</p></div>';
+    } else {
+      rounds.forEach((r,idx) => {
+        const total=r.scores.reduce((a,b)=>a+b,0);
+        const tp=r.pars.reduce((a,b)=>a+b,0);
+        const diff=total-tp;
+        const f9=r.scores.slice(0,9).reduce((a,b)=>a+b,0);
+        const b9=r.scores.slice(9).reduce((a,b)=>a+b,0);
+        const bc=diff>0?'score-over':diff<0?'score-under':'score-even';
+        const ds=diff>0?`+${diff}`:diff===0?'E':`${diff}`;
+        const ci=[r.frontCourse,r.backCourse].filter(Boolean).join(' / ');
+        html += `<div class="round-item" onclick="showRoundDetail('${escAttr(historyPlayer)}',${idx})">
+          <div class="round-header">
+            <span class="round-course">${esc(r.course)}</span>
+            <span class="round-date">${r.date}</span>
+          </div>
+          ${ci?`<div style="font-size:.78rem; color:var(--text-light); margin-top:2px;">${esc(ci)}</div>`:''}
+          <div class="round-score-row">
+            <span class="round-score-badge ${bc}">${total} (${ds})</span>
+            <span style="color:var(--text-light);">전반 ${f9} | 후반 ${b9}</span>
+          </div>
+        </div>`;
+      });
+    }
+    container.innerHTML = html;
+  }
+}
+
+function showPlayerHistory(name) { historyPlayer=name; renderHistory(); }
+
+let detailState = { playerName:null, idx:null, editing:false };
+
+function showRoundDetail(playerName, idx) {
+  detailState = { playerName, idx, editing:false };
+  renderDetailView();
+  openModal('detailModal');
+}
+
+function renderDetailView() {
+  const { playerName, idx, editing } = detailState;
+  const r=(DATA.rounds[playerName]||[])[idx];
+  if(!r) return;
+  document.getElementById('detailTitle').textContent=`${playerName} - ${r.course} (${r.date})`;
+  const ci=[r.frontCourse,r.backCourse].filter(Boolean).join(' / ');
+  let html = ci?`<p style="font-size:.85rem; color:var(--text-light); margin-bottom:12px;">${esc(ci)}</p>`:'';
+
+  if (editing) {
+    // ── 수정 모드 ──
+    html += '<div style="font-weight:700; font-size:.85rem; margin:8px 0 4px;">전반 (Front 9)</div>';
+    html += buildEditScorecard(r,0,9,1);
+    html += '<div style="font-weight:700; font-size:.85rem; margin:12px 0 4px;">후반 (Back 9)</div>';
+    html += buildEditScorecard(r,9,18,10);
+    html += `<div id="editTotalDisplay" style="text-align:center; margin-top:12px; font-size:1.1rem; font-weight:800; color:var(--green);"></div>`;
+  } else {
+    // ── 보기 모드 ──
+    html += '<div style="font-weight:700; font-size:.85rem; margin:8px 0 4px;">전반 (Front 9)</div>';
+    html += buildDetailScorecard(r,0,9,1);
+    html += '<div style="font-weight:700; font-size:.85rem; margin:12px 0 4px;">후반 (Back 9)</div>';
+    html += buildDetailScorecard(r,9,18,10);
+    const total=r.scores.reduce((a,b)=>a+b,0);
+    const tp=r.pars.reduce((a,b)=>a+b,0);
+    const diff=total-tp;
+    const ds=diff>0?`+${diff}`:diff===0?'Even':`${diff}`;
+    html += `<div style="text-align:center; margin-top:16px; font-size:1.2rem; font-weight:800; color:var(--green);">
+      ${total} <span style="font-size:.9rem; font-weight:600; color:var(--text-light);">(${ds})</span></div>`;
+    const breakdown=getScoreBreakdown(r);
+    html += '<div style="margin-top:16px;">';
+    const cats=[{key:'eagle',label:'Eagle 이하',color:'var(--eagle)'},{key:'birdie',label:'Birdie',color:'var(--birdie)'},
+      {key:'par',label:'Par',color:'var(--par)'},{key:'bogey',label:'Bogey',color:'var(--bogey)'},
+      {key:'double',label:'Double Bogey',color:'var(--double)'},{key:'over',label:'Triple+',color:'var(--over)'}];
+    const played=r.scores.filter(s=>s>0).length;
+    cats.forEach(c=>{if(breakdown[c.key]>0){const pct=(breakdown[c.key]/played*100).toFixed(0);
+      html+=`<div class="dist-bar-container"><div class="dist-label"><span>${c.label}</span><span>${breakdown[c.key]}개 (${pct}%)</span></div>
+      <div class="dist-bar-bg"><div class="dist-bar-fill" style="width:${pct}%; background:${c.color};"></div></div></div>`;}});
+    html += '</div>';
+  }
+
+  document.getElementById('detailContent').innerHTML=html;
+
+  // 버튼 상태
+  const deleteBtn=document.getElementById('detailDeleteBtn');
+  const editBtn=document.getElementById('detailEditBtn');
+  if (editing) {
+    deleteBtn.style.display='none';
+    editBtn.textContent='저장';
+    editBtn.className='btn btn-primary btn-sm';
+    editBtn.onclick=()=>saveEditedRound();
+    // 수정 모드 총점 계산
+    calcEditTotal();
+  } else {
+    deleteBtn.style.display='';
+    editBtn.textContent='수정';
+    editBtn.className='btn btn-outline btn-sm';
+    editBtn.onclick=()=>{ detailState.editing=true; renderDetailView(); };
+    deleteBtn.onclick=()=>{
+      if(!confirm('이 라운드를 삭제하시겠습니까?')) return;
+      DATA.rounds[playerName].splice(idx,1); saveData(); closeModal('detailModal');
+      renderHistory(); renderOverview();
+    };
+  }
+}
+
+function buildEditScorecard(r, from, to, startHole) {
+  let html='<div class="detail-scorecard" style="grid-template-columns:44px repeat(9,1fr) 38px;"><div class="lbl">Hole</div>';
+  for(let i=from;i<to;i++) html+=`<div style="background:#e8f5e9; font-weight:700;">${startHole+(i-from)}</div>`;
+  html+=`<div style="background:#c8e6c9; font-weight:800;">계</div><div class="lbl">Par</div>`;
+  let ps=0; for(let i=from;i<to;i++){html+=`<div>${r.pars[i]}</div>`;ps+=r.pars[i];}
+  html+=`<div style="font-weight:700;">${ps}</div><div class="lbl" style="font-size:.65rem; color:var(--text-light);">+/-</div>`;
+  for(let i=from;i<to;i++){
+    // 실제 스코어를 오버타수로 변환하여 표시
+    const overVal = r.scores[i] ? r.scores[i] - r.pars[i] : '';
+    html+=`<div style="padding:2px;"><input type="number" min="-3" max="9" value="${overVal}" id="editScore${i}"
+      inputmode="numeric" onfocus="this.select()" oninput="calcEditTotal()" placeholder="0"
+      style="width:100%; height:28px; text-align:center; border:1.5px solid var(--green-light); border-radius:4px; font-size:.8rem; font-weight:700; padding:0; background:#f1f8e9; -moz-appearance:textfield;">
+    </div>`;
+  }
+  let ss=0; for(let i=from;i<to;i++) ss+=r.scores[i]||0;
+  html+=`<div style="font-weight:800;" id="editSub${from}">${ss}</div></div>`;
+  return html;
+}
+
+function calcEditTotal() {
+  const r=(DATA.rounds[detailState.playerName]||[])[detailState.idx];
+  if(!r) return;
+  // 오버타수를 실제 스코어로 변환하여 합산
+  let fActual=0, bActual=0, fOver=0, bOver=0;
+  for(let i=0;i<9;i++){const v=parseInt(document.getElementById(`editScore${i}`)?.value)||0; fOver+=v; fActual+=r.pars[i]+v;}
+  for(let i=9;i<18;i++){const v=parseInt(document.getElementById(`editScore${i}`)?.value)||0; bOver+=v; bActual+=r.pars[i]+v;}
+  const el0=document.getElementById('editSub0'); if(el0) el0.textContent=fActual;
+  const el9=document.getElementById('editSub9'); if(el9) el9.textContent=bActual;
+  const total=fActual+bActual;
+  const diff=fOver+bOver;
+  const ds=diff>0?`+${diff}`:diff===0?'Even':`${diff}`;
+  const display=document.getElementById('editTotalDisplay');
+  if(display) display.innerHTML=`${total} <span style="font-size:.9rem; font-weight:600; color:var(--text-light);">(${ds})</span>`;
+}
+
+function saveEditedRound() {
+  const { playerName, idx } = detailState;
+  const r=(DATA.rounds[playerName]||[])[idx];
+  if(!r) return;
+  // 오버타수 → 실제 스코어 변환
+  for(let i=0;i<18;i++){
+    const el=document.getElementById(`editScore${i}`);
+    if(el && el.value!=='') r.scores[i] = r.pars[i] + (parseInt(el.value)||0);
+  }
+  saveData();
+  detailState.editing=false;
+  renderDetailView();
+  renderHistory();
+  renderOverview();
+}
+
+function buildDetailScorecard(r,from,to,startHole) {
+  let html='<div class="detail-scorecard"><div class="lbl">Hole</div>';
+  for(let i=from;i<to;i++) html+=`<div style="background:#e8f5e9; font-weight:700;">${startHole+(i-from)}</div>`;
+  html+=`<div style="background:#c8e6c9; font-weight:800;">계</div><div class="lbl">Par</div>`;
+  let ps=0; for(let i=from;i<to;i++){html+=`<div>${r.pars[i]}</div>`;ps+=r.pars[i];}
+  html+=`<div style="font-weight:700;">${ps}</div><div class="lbl">Score</div>`;
+  let ss=0; for(let i=from;i<to;i++){const s=r.scores[i],p=r.pars[i];
+    const cls=s===0?'':s<=p-2?'hole-eagle':s===p-1?'hole-birdie':s===p?'hole-par':s===p+1?'hole-bogey':s===p+2?'hole-double':'hole-over';
+    html+=`<div class="${cls}">${s||'-'}</div>`;ss+=s;}
+  html+=`<div style="font-weight:800;">${ss}</div></div>`;return html;
+}
+
+function getScoreBreakdown(r) {
+  const b={eagle:0,birdie:0,par:0,bogey:0,double:0,over:0};
+  for(let i=0;i<18;i++){if(r.scores[i]===0)continue;const d=r.scores[i]-r.pars[i];
+    if(d<=-2)b.eagle++;else if(d===-1)b.birdie++;else if(d===0)b.par++;
+    else if(d===1)b.bogey++;else if(d===2)b.double++;else b.over++;}return b;
+}
+
+// ══════════════════════════════════════
+// CHART
+// ══════════════════════════════════════
+function renderTrendChart(rounds, svgId) {
+  const svg=document.getElementById(svgId);
+  if(!svg) return;
+  const recent=[...rounds].reverse().slice(-15);
+  if(recent.length<2){svg.innerHTML='<text x="50%" y="50%" text-anchor="middle" fill="#999" font-size="13">2라운드 이상 필요</text>';return;}
+  const W=700,H=180,pL=40,pR=15,pT=18,pB=28;
+  const scores=recent.map(r=>r.scores.reduce((a,b)=>a+b,0));
+  const mn=Math.min(...scores)-3,mx=Math.max(...scores)+3;
+  const xS=(W-pL-pR)/(scores.length-1);
+  const x=i=>pL+i*xS, y=v=>pT+(1-(v-mn)/(mx-mn))*(H-pT-pB);
+  let html=`<defs><linearGradient id="cg_${svgId}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#4caf50" stop-opacity="0.3"/><stop offset="100%" stop-color="#4caf50" stop-opacity="0.02"/></linearGradient></defs>`;
+  for(let i=0;i<=4;i++){const v=Math.round(mn+(mx-mn)*(i/4)),yp=y(v);
+    html+=`<line x1="${pL}" y1="${yp}" x2="${W-pR}" y2="${yp}" class="chart-grid"/>`;
+    html+=`<text x="${pL-6}" y="${yp+4}" text-anchor="end" class="chart-label">${v}</text>`;}
+  let ap=`M ${x(0)} ${y(scores[0])}`;scores.forEach((s,i)=>{if(i>0)ap+=` L ${x(i)} ${y(s)}`;});
+  ap+=` L ${x(scores.length-1)} ${H-pB} L ${x(0)} ${H-pB} Z`;
+  html+=`<path d="${ap}" fill="url(#cg_${svgId})" opacity=".3"/>`;
+  let lp=`M ${x(0)} ${y(scores[0])}`;scores.forEach((s,i)=>{if(i>0)lp+=` L ${x(i)} ${y(s)}`;});
+  html+=`<path d="${lp}" class="chart-line"/>`;
+  scores.forEach((s,i)=>{html+=`<circle cx="${x(i)}" cy="${y(s)}" r="3.5" class="chart-dot"/>`;
+    html+=`<text x="${x(i)}" y="${y(s)-9}" text-anchor="middle" font-size="10" fill="#333" font-weight="600">${s}</text>`;});
+  recent.forEach((r,i)=>{if(recent.length<=8||i%2===0){
+    html+=`<text x="${x(i)}" y="${H-6}" text-anchor="middle" class="chart-label">${r.date.slice(5)}</text>`;}});
+  svg.setAttribute('viewBox',`0 0 ${W} ${H}`);svg.innerHTML=html;
+}
+
+// ══════════════════════════════════════
+// SETTINGS - PLAYERS
+// ══════════════════════════════════════
+function addPlayer() {
+  const input=document.getElementById('newPlayerName');
+  const name=input.value.trim();
+  if(!name||DATA.players.includes(name)) return;
+  DATA.players.push(name); DATA.rounds[name]=DATA.rounds[name]||[];
+  saveData(); input.value=''; renderPlayerList(); renderOverview(); renderRecordPlayerSelect();
+}
+function removePlayer(name) {
+  if(DATA.players.length<=1) return alert('최소 1명의 플레이어가 필요합니다.');
+  if(!confirm(`"${name}" 플레이어와 모든 기록을 삭제하시겠습니까?`)) return;
+  DATA.players=DATA.players.filter(p=>p!==name); delete DATA.rounds[name]; delete DATA.handicaps[name];
+  saveData(); renderPlayerList(); renderOverview(); renderRecordPlayerSelect(); renderHistory();
+}
+function renamePlayer(oldName) {
+  const nn=prompt('새 이름을 입력하세요:',oldName);
+  if(!nn||nn.trim()===''||nn.trim()===oldName) return;
+  const t=nn.trim(); if(DATA.players.includes(t)) return alert('이미 존재하는 이름입니다.');
+  const idx=DATA.players.indexOf(oldName); if(idx===-1) return;
+  DATA.players[idx]=t; DATA.rounds[t]=DATA.rounds[oldName]||[]; delete DATA.rounds[oldName];
+  if(DATA.handicaps[oldName]!==undefined){DATA.handicaps[t]=DATA.handicaps[oldName]; delete DATA.handicaps[oldName];}
+  saveData(); renderPlayerList(); renderOverview(); renderRecordPlayerSelect(); renderHistory();
+}
+function updateHandicap(name,val) {
+  if(!DATA.handicaps) DATA.handicaps={};
+  if(val===''||val===null) delete DATA.handicaps[name];
+  else DATA.handicaps[name]=parseInt(val)||0;
+  saveData(); renderOverview();
+}
+
+function renderPlayerList() {
+  const list=document.getElementById('playerList');
+  list.innerHTML=DATA.players.map(name=>{
+    const hdcp=DATA.handicaps[name]!==undefined?DATA.handicaps[name]:'';
+    return `<div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--border);">
+      <div style="display:flex; align-items:center; gap:10px;">
+        <span style="font-weight:600;">${esc(name)}</span>
+        <span style="font-size:.75rem; color:var(--text-light);">${(DATA.rounds[name]||[]).length}R</span>
+      </div>
+      <div style="display:flex; align-items:center; gap:6px;">
+        <span style="font-size:.73rem; color:var(--text-light);">HDCP</span>
+        <input type="number" min="0" max="54" value="${hdcp}" placeholder="-"
+          style="width:50px; padding:4px 2px; text-align:center; font-size:.85rem; font-weight:700; border-radius:6px;"
+          onchange="updateHandicap('${escAttr(name)}',this.value)">
+        <button class="btn btn-outline btn-sm" onclick="renamePlayer('${escAttr(name)}')">이름변경</button>
+        <button class="btn btn-danger btn-sm" onclick="removePlayer('${escAttr(name)}')">삭제</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════
+// SETTINGS - COURSES
+// ══════════════════════════════════════
+function renderCourseSettingsList() {
+  const container=document.getElementById('courseSettingsList');
+  const courses=DATA.courses||{};
+  const names=Object.keys(courses);
+  if(names.length===0){container.innerHTML='<div style="text-align:center; padding:20px; color:var(--text-light); font-size:.85rem;">등록된 골프장이 없습니다.</div>';return;}
+  container.innerHTML=names.map(name=>{
+    const subs=Object.keys(courses[name]);
+    return `<div class="course-item">
+      <div class="course-item-header" onclick="this.parentElement.classList.toggle('open')">
+        <h4>${esc(name)} <span style="font-size:.75rem; color:var(--text-light); font-weight:400;">(${subs.length}코스)</span></h4>
+        <span style="font-size:.8rem; color:var(--text-light);">&#9660;</span>
+      </div>
+      <div class="course-item-body">
+        ${subs.map(sub=>{const p=courses[name][sub]; return `<div style="margin-bottom:8px;">
+          <span style="font-weight:600; font-size:.85rem;">${esc(sub)}</span>
+          <span style="font-size:.8rem; color:var(--text-light); margin-left:8px;">[${p.join(', ')}] = Par ${p.reduce((a,b)=>a+b,0)}</span>
+        </div>`;}).join('')}
+        <div style="display:flex; gap:8px; margin-top:10px;">
+          <button class="btn btn-outline btn-sm" onclick="openEditCourseModal('${escAttr(name)}')">수정</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteCourse('${escAttr(name)}')">삭제</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let editingCourseName=null, courseRowCounter=0;
+function openAddCourseModal(){
+  editingCourseName=null;
+  document.getElementById('courseModalTitle').textContent='골프장 추가';
+  document.getElementById('courseModalName').value='';
+  document.getElementById('courseModalCourses').innerHTML='';
+  courseRowCounter=0; addCourseRow('A코스'); addCourseRow('B코스'); addCourseRow('C코스');
+  openModal('courseModal');
+}
+function openEditCourseModal(name){
+  editingCourseName=name;
+  document.getElementById('courseModalTitle').textContent='골프장 수정';
+  document.getElementById('courseModalName').value=name;
+  document.getElementById('courseModalCourses').innerHTML='';
+  courseRowCounter=0;
+  const subs=DATA.courses[name]||{};
+  Object.keys(subs).forEach(sn=>addCourseRow(sn,subs[sn]));
+  if(Object.keys(subs).length===0) addCourseRow();
+  openModal('courseModal');
+}
+function addCourseRow(name,pars){
+  const idx=courseRowCounter++;
+  const dp=pars||[4,4,4,4,4,4,4,4,4];
+  const div=document.createElement('div');
+  div.id=`courseRow${idx}`;
+  div.style.cssText='border:1px solid var(--border); border-radius:8px; padding:12px; margin-bottom:8px;';
+  div.innerHTML=`<div style="display:flex; gap:8px; align-items:center; margin-bottom:8px;">
+    <input type="text" id="crName${idx}" value="${esc(name||'')}" placeholder="코스 이름 (예: A코스)" style="flex:1; padding:8px 12px; font-size:.85rem;">
+    <button class="btn btn-danger btn-sm" onclick="document.getElementById('courseRow${idx}').remove()">삭제</button>
+  </div>
+  <div class="par-edit-grid"><div class="pe-hdr">Hole</div>
+    ${[1,2,3,4,5,6,7,8,9].map(h=>`<div class="pe-hdr">${h}</div>`).join('')}
+    <div class="pe-hdr">계</div><div class="pe-lbl">Par</div>
+    ${dp.map((p,i)=>`<div><input type="number" min="3" max="6" value="${p}" id="crPar${idx}_${i}" oninput="updateCourseRowSum(${idx})"></div>`).join('')}
+    <div class="pe-sum" id="crSum${idx}">${dp.reduce((a,b)=>a+b,0)}</div>
+  </div>`;
+  document.getElementById('courseModalCourses').appendChild(div);
+}
+function updateCourseRowSum(idx){
+  let s=0; for(let i=0;i<9;i++){const el=document.getElementById(`crPar${idx}_${i}`);if(el)s+=parseInt(el.value)||0;}
+  const el=document.getElementById(`crSum${idx}`);if(el)el.textContent=s;
+}
+function saveCourseModal(){
+  const cn=document.getElementById('courseModalName').value.trim();
+  if(!cn) return alert('골프장 이름을 입력해주세요.');
+  if(editingCourseName!==cn && DATA.courses[cn]) return alert('이미 존재하는 골프장 이름입니다.');
+  const cd={};
+  for(let idx=0;idx<courseRowCounter;idx++){
+    if(!document.getElementById(`courseRow${idx}`))continue;
+    const sn=document.getElementById(`crName${idx}`).value.trim(); if(!sn)continue;
+    const p=[];for(let i=0;i<9;i++)p.push(parseInt(document.getElementById(`crPar${idx}_${i}`).value)||4);
+    cd[sn]=p;
+  }
+  if(Object.keys(cd).length===0) return alert('최소 1개의 코스를 입력해주세요.');
+  if(editingCourseName && editingCourseName!==cn) delete DATA.courses[editingCourseName];
+  DATA.courses[cn]=cd; saveData(); closeModal('courseModal'); renderCourseSettingsList(); renderCourseSelect();
+}
+function deleteCourse(name){
+  if(!confirm(`"${name}" 골프장을 삭제하시겠습니까?`))return;
+  delete DATA.courses[name]; saveData(); renderCourseSettingsList(); renderCourseSelect();
+}
+
+// ══════════════════════════════════════
+// DATA MANAGEMENT
+// ══════════════════════════════════════
+function exportData(){
+  const b=new Blob([JSON.stringify(DATA,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+  a.download=`jb_golf_backup_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(a.href);
+}
+function importData(event){
+  const f=event.target.files[0]; if(!f) return;
+  const reader=new FileReader();
+  reader.onload=e=>{try{
+    const imp=JSON.parse(e.target.result);
+    if(!imp.players||!imp.rounds)throw new Error('잘못된 형식');
+    if(!confirm('현재 데이터를 교체하시겠습니까?'))return;
+    DATA=imp; if(!DATA.courses)DATA.courses={}; if(!DATA.handicaps)DATA.handicaps={};
+    saveData(); renderAll(); alert('데이터를 성공적으로 가져왔습니다.');
+  }catch(err){alert('데이터 형식이 올바르지 않습니다: '+err.message);}};
+  reader.readAsText(f); event.target.value='';
+}
+function resetData(){
+  if(!confirm('정말 모든 데이터를 초기화하시겠습니까?'))return;
+  if(!confirm('정말로요? 모든 플레이어와 기록이 삭제됩니다.'))return;
+  localStorage.removeItem(STORAGE_KEY); DATA=getDefaultData(); saveData(); renderAll();
+}
+
+// ══════════════════════════════════════
+// ADMIN MODE (헤더 5번 탭)
+// ══════════════════════════════════════
+let adminMode = false;
+let adminTaps = 0;
+let adminTapTimer = null;
+document.querySelector('header').addEventListener('click', () => {
+  adminTaps++;
+  clearTimeout(adminTapTimer);
+  adminTapTimer = setTimeout(() => { adminTaps = 0; }, 1500);
+  if (adminTaps >= 5) {
+    adminTaps = 0;
+    adminMode = !adminMode;
+    document.querySelectorAll('.admin-only').forEach(el => {
+      el.style.display = adminMode ? '' : 'none';
+    });
+  }
+});
+
+// ══════════════════════════════════════
+// SCORECARD OCR (Gemini API)
+// ══════════════════════════════════════
+let ocrData = null; // parsed OCR result
+
+async function handleScorecardUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  event.target.value = '';
+
+  const apiKey = DATA.geminiApiKey;
+  if (!apiKey) { alert('설정에서 Gemini API Key를 먼저 입력해주세요.'); return; }
+
+  const status = document.getElementById('ocrStatus');
+  status.style.display = 'block';
+
+  try {
+    // Convert to base64
+    const base64 = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+    const prompt = `이 골프 스코어카드 사진을 분석해주세요.
+
+다음 JSON 형식으로 정확히 응답해주세요 (다른 텍스트 없이 JSON만):
+{
+  "course": "골프장 이름 (인식 가능하면)",
+  "date": "날짜 (인식 가능하면, YYYY-MM-DD 형식)",
+  "players": [
+    {
+      "name": "플레이어 이름",
+      "front9": [홀1, 홀2, ..., 홀9],
+      "back9": [홀10, 홀11, ..., 홀18]
+    }
+  ]
+}
+
+중요 규칙:
+- 스코어는 각 홀의 오버타수(파 대비)로 기록되어 있을 수 있습니다 (0=Par, 1=Bogey, 2=Double 등)
+- 만약 실제 타수(예: 4, 5, 6...)로 적혀있다면, 파를 빼서 오버타수로 변환해주세요
+- 스코어카드에 Par 정보가 있으면 그걸 기준으로, 없으면 일반적인 파(대부분 4)를 기준으로 판단
+- 빈 칸이나 인식 불가한 홀은 null로 표시
+- front9, back9 배열은 반드시 9개씩
+- 이름이 안 보이면 "Player 1", "Player 2" 등으로 표기`;
+
+    const resp = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [{
+            parts: [
+              { text: prompt },
+              { inline_data: { mime_type: file.type || 'image/jpeg', data: base64 } }
+            ]
+          }]
+        })
+      }
+    );
+
+    if (!resp.ok) throw new Error(`API 오류: ${resp.status}`);
+    const result = await resp.json();
+    const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
+
+    // Extract JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error('인식 결과를 파싱할 수 없습니다.');
+    ocrData = JSON.parse(jsonMatch[0]);
+
+    showOcrPreview();
+  } catch (err) {
+    alert('스코어카드 인식 실패: ' + err.message);
+  } finally {
+    status.style.display = 'none';
+  }
+}
+
+function showOcrPreview() {
+  if (!ocrData || !ocrData.players) return;
+
+  const info = [];
+  if (ocrData.course) info.push(`골프장: ${ocrData.course}`);
+  if (ocrData.date) info.push(`날짜: ${ocrData.date}`);
+  document.getElementById('ocrInfo').textContent = info.join(' | ') || '골프장/날짜 정보 없음';
+
+  // Match course
+  let matchedCourse = '';
+  if (ocrData.course) {
+    const courseNames = Object.keys(DATA.courses);
+    matchedCourse = courseNames.find(c => ocrData.course.includes(c) || c.includes(ocrData.course)) || '';
+  }
+
+  let html = '';
+  let matchCount = 0;
+
+  ocrData.players.forEach((p, pi) => {
+    // Match with registered players
+    const matched = DATA.players.find(rp =>
+      rp === p.name || p.name.includes(rp) || rp.includes(p.name)
+    );
+    const isMatched = !!matched;
+    if (isMatched) matchCount++;
+
+    const front = (p.front9 || []).map(v => v !== null ? v : '-');
+    const back = (p.back9 || []).map(v => v !== null ? v : '-');
+
+    html += `<div class="ocr-player-card ${isMatched ? 'matched' : 'unmatched'}" data-idx="${pi}">
+      <div class="ocr-player-name">
+        ${esc(p.name)}
+        ${isMatched
+          ? `<span class="ocr-match-badge ok">&#10003; ${esc(matched)}</span>`
+          : `<span class="ocr-match-badge no">미등록</span>`}
+      </div>
+      <div style="font-size:.75rem; color:var(--text-light); margin-bottom:4px;">전반: [${front.join(', ')}] | 후반: [${back.join(', ')}]</div>
+      <div style="display:flex; gap:3px; flex-wrap:wrap;">
+        ${front.map(v => {
+          const bg = v === '-' ? '#f5f5f5' : v < 0 ? '#e1f5fe' : v === 0 ? '#e8f5e9' : v === 1 ? '#fffde7' : v === 2 ? '#fff3e0' : '#ffebee';
+          return `<span class="ocr-scores" style="width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-weight:600;font-size:.78rem;background:${bg};">${v}</span>`;
+        }).join('')}
+        <span style="width:8px;"></span>
+        ${back.map(v => {
+          const bg = v === '-' ? '#f5f5f5' : v < 0 ? '#e1f5fe' : v === 0 ? '#e8f5e9' : v === 1 ? '#fffde7' : v === 2 ? '#fff3e0' : '#ffebee';
+          return `<span class="ocr-scores" style="width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-weight:600;font-size:.78rem;background:${bg};">${v}</span>`;
+        }).join('')}
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('ocrPreview').innerHTML = html;
+  document.getElementById('ocrSaveBtn').textContent = `등록 멤버 ${matchCount}명 일괄 저장`;
+  document.getElementById('ocrSaveBtn').disabled = matchCount === 0;
+  openModal('ocrModal');
+}
+
+function saveOcrRounds() {
+  if (!ocrData || !ocrData.players) return;
+
+  const date = ocrData.date || new Date().toISOString().slice(0, 10);
+  let savedCount = 0;
+
+  // Try to match course and get pars
+  let courseName = '', frontCourse = '', backCourse = '', pars = Array(18).fill(4);
+  if (ocrData.course) {
+    const courseNames = Object.keys(DATA.courses);
+    courseName = courseNames.find(c => ocrData.course.includes(c) || c.includes(ocrData.course)) || ocrData.course;
+    if (DATA.courses[courseName]) {
+      const subs = Object.keys(DATA.courses[courseName]);
+      if (subs.length >= 2) {
+        frontCourse = subs[0]; backCourse = subs[1];
+        pars = [...DATA.courses[courseName][subs[0]], ...DATA.courses[courseName][subs[1]]];
+      } else if (subs.length === 1) {
+        frontCourse = subs[0]; backCourse = subs[0];
+        pars = [...DATA.courses[courseName][subs[0]], ...DATA.courses[courseName][subs[0]]];
+      }
+    }
+  }
+
+  ocrData.players.forEach(p => {
+    const matched = DATA.players.find(rp =>
+      rp === p.name || p.name.includes(rp) || rp.includes(p.name)
+    );
+    if (!matched) return;
+
+    const front = p.front9 || [];
+    const back = p.back9 || [];
+
+    // 오버타수 → 실제 스코어 변환
+    const scores = [];
+    for (let i = 0; i < 9; i++) {
+      const over = (front[i] !== null && front[i] !== undefined) ? front[i] : 0;
+      scores.push(pars[i] + over);
+    }
+    for (let i = 0; i < 9; i++) {
+      const over = (back[i] !== null && back[i] !== undefined) ? back[i] : 0;
+      scores.push(pars[9 + i] + over);
+    }
+
+    if (!DATA.rounds[matched]) DATA.rounds[matched] = [];
+    DATA.rounds[matched].push({
+      date, course: courseName || '미입력', frontCourse, backCourse,
+      pars: [...pars], scores, createdAt: Date.now()
+    });
+    DATA.rounds[matched].sort((a, b) => b.date.localeCompare(a.date));
+    savedCount++;
+  });
+
+  saveData();
+  closeModal('ocrModal');
+  ocrData = null;
+  renderOverview();
+  renderHistory();
+  alert(`${savedCount}명의 라운드가 저장되었습니다!`);
+}
+
+// ══════════════════════════════════════
+// TABS & MODAL
+// ══════════════════════════════════════
+document.querySelectorAll('.tab-btn, .tab-settings').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.tab-btn, .tab-settings').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('sec-'+btn.dataset.tab).classList.add('active');
+  });
+});
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show');});
+});
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+function renderAll(){
+  document.getElementById('roundDate').value=new Date().toISOString().slice(0,10);
+  currentPars={front:[4,4,4,4,4,4,4,4,4],back:[4,4,4,4,4,4,4,4,4]};
+  buildScoreGrid('frontGrid','front');
+  buildScoreGrid('backGrid','back');
+  calcTotals();
+  renderRecordPlayerSelect();
+  renderOverview();
+  renderPlayerList();
+  renderHistory();
+  renderCourseSelect();
+  renderCourseSettingsList();
+  // API 키 복원
+  if(DATA.geminiApiKey) document.getElementById('geminiApiKey').value = DATA.geminiApiKey;
+}
+
+// ── 샘플 데이터 (처음 한 번) ──
+function generateSampleData(){
+  const total=Object.values(DATA.rounds).reduce((s,r)=>s+r.length,0);
+  if(total>0)return;
+  const cDefs=[
+    {name:'Horizon Hills G&CC',front:'Front 9 (OUT)',back:'Back 9 (IN)'},
+    {name:'Kukup Golf Resort',front:'Front 9 (OUT)',back:'Back 9 (IN)'},
+    {name:'IOI Palm Villa',front:'IOI Course',back:'Palm Course'}
+  ];
+  const handicaps=DATA.handicaps||DEFAULT_HANDICAPS;
+  function randDate(i){const d=new Date(2025,9+i*2,5+Math.floor(Math.random()*20));if(d>new Date())d.setMonth(d.getMonth()-4);return d.toISOString().slice(0,10);}
+  // 오버타수 생성 후 par + over로 실제 스코어 반환
+  function genScore(par,hdcp){
+    const r=Math.random();let over;
+    if(hdcp<=10){if(r<.08)over=-1;else if(r<.45)over=0;else if(r<.78)over=1;else if(r<.93)over=2;else over=3;}
+    else if(hdcp<=20){if(r<.03)over=-1;else if(r<.22)over=0;else if(r<.52)over=1;else if(r<.78)over=2;else if(r<.93)over=3;else over=4;}
+    else{if(r<.01)over=-1;else if(r<.08)over=0;else if(r<.28)over=1;else if(r<.53)over=2;else if(r<.78)over=3;else if(r<.93)over=4;else over=5;}
+    return Math.max(1, par + over);
+  }
+  DATA.players.forEach(name=>{
+    const hdcp=handicaps[name]||18;
+    DATA.rounds[name]=[];
+    cDefs.forEach((cd,ri)=>{
+      const fp=DATA.courses[cd.name][cd.front];
+      const bp=DATA.courses[cd.name][cd.back];
+      const pars=[...fp,...bp];
+      const scores=pars.map(p=>genScore(p,hdcp));
+      DATA.rounds[name].push({date:randDate(ri),course:cd.name,frontCourse:cd.front,backCourse:cd.back,pars,scores,createdAt:Date.now()-(3-ri)*86400000});
+    });
+    DATA.rounds[name].sort((a,b)=>b.date.localeCompare(a.date));
+  });
+  saveData();
+}
+
+generateSampleData();
+renderAll();
+</script>
+</body>
+</html>
