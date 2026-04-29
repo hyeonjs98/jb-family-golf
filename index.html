@@ -1549,14 +1549,22 @@ function showOcrPreview() {
       <div style="display:flex; gap:2px; align-items:center; flex-wrap:wrap;">
         <span style="font-size:.65rem; color:var(--text-light); width:18px;">전반</span>
         ${front.map((v, i) => `<input type="number" min="-3" max="9" value="${v !== null ? v : ''}" id="ocrS${pi}_${i}" inputmode="numeric"
+          oninput="calcOcrPlayerSum(${pi})"
           style="width:28px; height:28px; text-align:center; border:1px solid #ddd; border-radius:4px; font-size:.78rem; font-weight:600; padding:0; -moz-appearance:textfield;">`
         ).join('')}
+        <span id="ocrFSum${pi}" style="font-size:.75rem; font-weight:700; color:var(--green); min-width:24px; text-align:center;">${front.reduce((a,b)=>a+(b||0),0)}</span>
       </div>
       <div style="display:flex; gap:2px; align-items:center; flex-wrap:wrap; margin-top:4px;">
         <span style="font-size:.65rem; color:var(--text-light); width:18px;">후반</span>
         ${back.map((v, i) => `<input type="number" min="-3" max="9" value="${v !== null ? v : ''}" id="ocrS${pi}_${9+i}" inputmode="numeric"
+          oninput="calcOcrPlayerSum(${pi})"
           style="width:28px; height:28px; text-align:center; border:1px solid #ddd; border-radius:4px; font-size:.78rem; font-weight:600; padding:0; -moz-appearance:textfield;">`
         ).join('')}
+        <span id="ocrBSum${pi}" style="font-size:.75rem; font-weight:700; color:var(--green); min-width:24px; text-align:center;">${back.reduce((a,b)=>a+(b||0),0)}</span>
+      </div>
+      <div style="text-align:right; margin-top:4px;">
+        <span style="font-size:.75rem; color:var(--text-light);">합계</span>
+        <span id="ocrTSum${pi}" style="font-size:.85rem; font-weight:800; color:var(--green-dark); margin-left:4px;">${front.reduce((a,b)=>a+(b||0),0)+back.reduce((a,b)=>a+(b||0),0)}</span>
       </div>
     </div>`;
   });
@@ -1587,6 +1595,15 @@ function updateOcrSaveBtn() {
   }
   document.getElementById('ocrSaveBtn').textContent = '등록 멤버 ' + count + '명 일괄 저장';
   document.getElementById('ocrSaveBtn').disabled = count === 0;
+}
+
+function calcOcrPlayerSum(pi) {
+  var fSum=0, bSum=0;
+  for(var i=0;i<9;i++) { var el=document.getElementById('ocrS'+pi+'_'+i); if(el) fSum+=parseInt(el.value)||0; }
+  for(var i=9;i<18;i++) { var el=document.getElementById('ocrS'+pi+'_'+i); if(el) bSum+=parseInt(el.value)||0; }
+  var fe=document.getElementById('ocrFSum'+pi); if(fe) fe.textContent=fSum;
+  var be=document.getElementById('ocrBSum'+pi); if(be) be.textContent=bSum;
+  var te=document.getElementById('ocrTSum'+pi); if(te) te.textContent=fSum+bSum;
 }
 
 function updateOcrCourseOptions() {
