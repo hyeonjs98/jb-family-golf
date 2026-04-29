@@ -1587,41 +1587,6 @@ function renderAll(){
   if(DATA.geminiApiKey) document.getElementById('geminiApiKey').value = DATA.geminiApiKey;
 }
 
-// ── 샘플 데이터 (처음 한 번) ──
-function generateSampleData(){
-  const total=Object.values(DATA.rounds).reduce((s,r)=>s+r.length,0);
-  if(total>0)return;
-  const cDefs=[
-    {name:'Horizon Hills G&CC',front:'Front 9 (OUT)',back:'Back 9 (IN)'},
-    {name:'Kukup Golf Resort',front:'Front 9 (OUT)',back:'Back 9 (IN)'},
-    {name:'IOI Palm Villa',front:'IOI Course',back:'Palm Course'}
-  ];
-  const handicaps=DATA.handicaps||DEFAULT_HANDICAPS;
-  function randDate(i){const d=new Date(2025,9+i*2,5+Math.floor(Math.random()*20));if(d>new Date())d.setMonth(d.getMonth()-4);return d.toISOString().slice(0,10);}
-  // 오버타수 생성 후 par + over로 실제 스코어 반환
-  function genScore(par,hdcp){
-    const r=Math.random();let over;
-    if(hdcp<=10){if(r<.08)over=-1;else if(r<.45)over=0;else if(r<.78)over=1;else if(r<.93)over=2;else over=3;}
-    else if(hdcp<=20){if(r<.03)over=-1;else if(r<.22)over=0;else if(r<.52)over=1;else if(r<.78)over=2;else if(r<.93)over=3;else over=4;}
-    else{if(r<.01)over=-1;else if(r<.08)over=0;else if(r<.28)over=1;else if(r<.53)over=2;else if(r<.78)over=3;else if(r<.93)over=4;else over=5;}
-    return Math.max(1, par + over);
-  }
-  DATA.players.forEach(name=>{
-    const hdcp=handicaps[name]||18;
-    DATA.rounds[name]=[];
-    cDefs.forEach((cd,ri)=>{
-      const fp=DATA.courses[cd.name][cd.front];
-      const bp=DATA.courses[cd.name][cd.back];
-      const pars=[...fp,...bp];
-      const scores=pars.map(p=>genScore(p,hdcp));
-      DATA.rounds[name].push({date:randDate(ri),course:cd.name,frontCourse:cd.front,backCourse:cd.back,pars,scores,createdAt:Date.now()-(3-ri)*86400000});
-    });
-    DATA.rounds[name].sort((a,b)=>b.date.localeCompare(a.date));
-  });
-  saveData();
-}
-
-generateSampleData();
 renderAll();
 </script>
 </body>
