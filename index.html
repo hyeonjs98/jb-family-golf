@@ -1685,6 +1685,8 @@ var pushingState = false;
 
 function switchTab(tab, fromPopState) {
   currentTab = tab;
+  // 기록보기 탭 진입 시 항상 전체 멤버 리스트로 초기화
+  if (tab === 'history' && !fromPopState) { historyPlayer = null; renderHistory(); }
   document.querySelectorAll('.tab-btn, .tab-settings').forEach(b=>b.classList.remove('active'));
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
   var btn = document.querySelector('[data-tab="'+tab+'"]');
