@@ -1482,38 +1482,51 @@ function showOcrPreview() {
 
   let matchCount = 0;
 
+  // 멤버 매칭 드롭다운 옵션
+  const playerOptions = '<option value="">-- 건너뛰기 --</option>' +
+    DATA.players.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+
   ocrData.players.forEach((p, pi) => {
-    // Match with registered players
     const matched = DATA.players.find(rp =>
       rp === p.name || p.name.includes(rp) || rp.includes(p.name)
     );
-    const isMatched = !!matched;
-    if (isMatched) matchCount++;
+    if (matched) matchCount++;
 
-    const front = (p.front9 || []).map(v => v !== null ? v : '-');
-    const back = (p.back9 || []).map(v => v !== null ? v : '-');
+    const front = p.front9 || Array(9).fill(0);
+    const back = p.back9 || Array(9).fill(0);
 
-    html += `<div class="ocr-player-card ${isMatched ? 'matched' : 'unmatched'}" data-idx="${pi}">
-      <div class="ocr-player-name">
-        ${esc(p.name)}
-        ${isMatched
-          ? `<span class="ocr-match-badge ok">&#10003; ${esc(matched)}</span>`
-          : `<span class="ocr-match-badge no">미등록</span>`}
+    html += `<div class="ocr-player-card ${matched ? 'matched' : 'unmatched'}" data-idx="${pi}">
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
+        <span style="font-size:.8rem; color:var(--text-light); white-space:nowrap;">인식: <b>${esc(p.name)}</b> →</span>
+        <select id="ocrPlayer${pi}" style="flex:1; padding:6px 8px; font-size:.85rem; font-weight:600;"
+          onchange="this.parentElement.parentElement.className='ocr-player-card '+(this.value?'matched':'unmatched')">
+          ${playerOptions}
+        </select>
       </div>
-      <div style="font-size:.75rem; color:var(--text-light); margin-bottom:4px;">전반: [${front.join(', ')}] | 후반: [${back.join(', ')}]</div>
-      <div style="display:flex; gap:3px; flex-wrap:wrap;">
-        ${front.map(v => {
-          const bg = v === '-' ? '#f5f5f5' : v < 0 ? '#e1f5fe' : v === 0 ? '#e8f5e9' : v === 1 ? '#fffde7' : v === 2 ? '#fff3e0' : '#ffebee';
-          return `<span class="ocr-scores" style="width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-weight:600;font-size:.78rem;background:${bg};">${v}</span>`;
-        }).join('')}
-        <span style="width:8px;"></span>
-        ${back.map(v => {
-          const bg = v === '-' ? '#f5f5f5' : v < 0 ? '#e1f5fe' : v === 0 ? '#e8f5e9' : v === 1 ? '#fffde7' : v === 2 ? '#fff3e0' : '#ffebee';
-          return `<span class="ocr-scores" style="width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:4px;font-weight:600;font-size:.78rem;background:${bg};">${v}</span>`;
-        }).join('')}
+      <div style="display:flex; gap:2px; align-items:center; flex-wrap:wrap;">
+        <span style="font-size:.65rem; color:var(--text-light); width:18px;">전반</span>
+        ${front.map((v, i) => `<input type="number" min="-3" max="9" value="${v !== null ? v : ''}" id="ocrS${pi}_${i}" inputmode="numeric"
+          style="width:28px; height:28px; text-align:center; border:1px solid #ddd; border-radius:4px; font-size:.78rem; font-weight:600; padding:0; -moz-appearance:textfield;">`
+        ).join('')}
+      </div>
+      <div style="display:flex; gap:2px; align-items:center; flex-wrap:wrap; margin-top:4px;">
+        <span style="font-size:.65rem; color:var(--text-light); width:18px;">후반</span>
+        ${back.map((v, i) => `<input type="number" min="-3" max="9" value="${v !== null ? v : ''}" id="ocrS${pi}_${9+i}" inputmode="numeric"
+          style="width:28px; height:28px; text-align:center; border:1px solid #ddd; border-radius:4px; font-size:.78rem; font-weight:600; padding:0; -moz-appearance:textfield;">`
+        ).join('')}
       </div>
     </div>`;
   });
+
+  // 매칭된 플레이어 자동 선택
+  setTimeout(() => {
+    ocrData.players.forEach((p, pi) => {
+      const matched = DATA.players.find(rp =>
+        rp === p.name || p.name.includes(rp) || rp.includes(p.name)
+      );
+      if (matched) document.getElementById(`ocrPlayer${pi}`).value = matched;
+    });
+  }, 50);
 
   document.getElementById('ocrPreview').innerHTML = html;
   document.getElementById('ocrSaveBtn').textContent = `등록 멤버 ${matchCount}명 일괄 저장`;
@@ -1557,32 +1570,26 @@ function saveOcrRounds() {
     pars = [...fp, ...bp];
   }
 
-  ocrData.players.forEach(p => {
-    const matched = DATA.players.find(rp =>
-      rp === p.name || p.name.includes(rp) || rp.includes(p.name)
-    );
-    if (!matched) return;
+  ocrData.players.forEach((p, pi) => {
+    // 드롭다운에서 선택된 멤버
+    const selEl = document.getElementById(`ocrPlayer${pi}`);
+    const playerName = selEl ? selEl.value : '';
+    if (!playerName) return; // 건너뛰기 선택된 경우
 
-    const front = p.front9 || [];
-    const back = p.back9 || [];
-
-    // 오버타수 → 실제 스코어 변환
+    // 수정된 스코어 읽기 (오버타수 → 실제 스코어)
     const scores = [];
-    for (let i = 0; i < 9; i++) {
-      const over = (front[i] !== null && front[i] !== undefined) ? front[i] : 0;
+    for (let i = 0; i < 18; i++) {
+      const el = document.getElementById(`ocrS${pi}_${i}`);
+      const over = el ? (parseInt(el.value) || 0) : 0;
       scores.push(pars[i] + over);
     }
-    for (let i = 0; i < 9; i++) {
-      const over = (back[i] !== null && back[i] !== undefined) ? back[i] : 0;
-      scores.push(pars[9 + i] + over);
-    }
 
-    if (!DATA.rounds[matched]) DATA.rounds[matched] = [];
-    DATA.rounds[matched].push({
-      date, course: courseName || '미입력', frontCourse, backCourse,
+    if (!DATA.rounds[playerName]) DATA.rounds[playerName] = [];
+    DATA.rounds[playerName].push({
+      date, course: courseName, frontCourse, backCourse,
       pars: [...pars], scores, createdAt: Date.now()
     });
-    DATA.rounds[matched].sort((a, b) => b.date.localeCompare(a.date));
+    DATA.rounds[playerName].sort((a, b) => b.date.localeCompare(a.date));
     savedCount++;
   });
 
