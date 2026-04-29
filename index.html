@@ -646,10 +646,9 @@ function escAttr(s) { return s.replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 function renderOverview() {
   const tbl = document.getElementById('overviewTable');
   let html = `<thead><tr>
-    <th>이름</th><th>핸디캡</th><th>산출<br>핸디캡</th><th>평균</th><th>베스트</th><th>라운드</th>
+    <th>이름</th><th>핸디캡</th><th>최근<br>스코어</th><th>게임<br>스코어</th><th>평균</th><th>베스트</th>
   </tr></thead><tbody>`;
 
-  // 순위: 핸디캡 - 산출핸디캡 차이가 가장 작은 순 (잘 치는 사람)
   const stats = DATA.players.map(name => {
     const rounds = DATA.rounds[name] || [];
     const totals = rounds.map(r => r.scores.reduce((a,b)=>a+b,0));
@@ -659,31 +658,48 @@ function renderOverview() {
     const best = totals.length ? Math.min(...totals) : null;
     const bestIdx = best !== null ? totals.indexOf(best) : -1;
     const bestOver = bestIdx >= 0 ? best - pars[bestIdx] : null;
-    const calcHdcp = calcHandicap(rounds);
     const hdcp = DATA.handicaps[name] !== undefined ? DATA.handicaps[name] : null;
-    let gap = 999;
-    if (hdcp !== null && calcHdcp !== null) gap = calcHdcp - hdcp;
-    return { name, avg, avgOver, best, bestOver, count: rounds.length, calcHdcp, hdcp, gap };
+    // 최근 스코어 (가장 최근 라운드의 오버타수)
+    var recentOver = null;
+    if (rounds.length > 0) {
+      var latestTotal = rounds[0].scores.reduce((a,b)=>a+b,0);
+      var latestPar = rounds[0].pars.reduce((a,b)=>a+b,0);
+      recentOver = latestTotal - latestPar;
+    }
+    // 게임 스코어 = 최근 스코어 - 핸디캡
+    var gameScore = 999;
+    if (recentOver !== null && hdcp !== null) gameScore = recentOver - hdcp;
+    return { name, avgOver, bestOver, hdcp, recentOver, gameScore, count: rounds.length };
   });
-  stats.sort((a,b) => a.gap - b.gap);
+  // 게임 스코어 낮은 순 정렬
+  stats.sort((a,b) => a.gameScore - b.gameScore);
 
   stats.forEach((s, i) => {
-    const hasData = s.count > 0 && s.hdcp !== null && s.calcHdcp !== null;
-    const rankBadge = hasData && i < 3
-      ? `<span class="rank-badge rank-${i+1}">${i+1}</span>` : '';
-    const avgStr = s.avgOver !== null ? s.avgOver : '-';
-    const calcStr = s.calcHdcp !== null ? Math.round(s.calcHdcp) : '-';
-    const hdcpStr = s.hdcp !== null ? s.hdcp : '-';
-    const bestStr = s.bestOver !== null ? s.bestOver : '-';
+    var hasData = s.count > 0 && s.gameScore !== 999;
+    var rankBadge = hasData && i < 3
+      ? '<span class="rank-badge rank-'+(i+1)+'">'+(i+1)+'</span>' : '';
+    var hdcpStr = s.hdcp !== null ? s.hdcp : '-';
+    var recentStr = s.recentOver !== null ? s.recentOver : '-';
+    var avgStr = s.avgOver !== null ? s.avgOver : '-';
+    var bestStr = s.bestOver !== null ? s.bestOver : '-';
 
-    html += `<tr onclick="showPlayerStats('${escAttr(s.name)}')">
-      <td>${rankBadge}${esc(s.name)}</td>
-      <td class="hdcp-col">${hdcpStr}</td>
-      <td class="calc-col">${calcStr}</td>
-      <td>${avgStr}</td>
-      <td class="best-col">${bestStr}</td>
-      <td style="color:var(--text-light); font-weight:400;">${s.count}</td>
-    </tr>`;
+    // 게임 스코어 표시 (양수=파랑/핸디캡보다 못침, 음수=빨강/핸디캡보다 잘침)
+    var gameStr = '-';
+    var gameStyle = '';
+    if (s.gameScore !== 999) {
+      if (s.gameScore > 0) { gameStr = '+' + s.gameScore; gameStyle = 'color:#1565c0;'; }
+      else if (s.gameScore < 0) { gameStr = '' + s.gameScore; gameStyle = 'color:#c62828;'; }
+      else { gameStr = '0'; gameStyle = 'color:var(--green);'; }
+    }
+
+    html += '<tr onclick="showPlayerStats(\''+escAttr(s.name)+'\')">' +
+      '<td>'+rankBadge+esc(s.name)+'</td>' +
+      '<td class="hdcp-col">'+hdcpStr+'</td>' +
+      '<td>'+recentStr+'</td>' +
+      '<td style="font-weight:800;'+gameStyle+'">'+gameStr+'</td>' +
+      '<td>'+avgStr+'</td>' +
+      '<td class="best-col">'+bestStr+'</td>' +
+    '</tr>';
   });
   html += '</tbody>';
   tbl.innerHTML = html;
