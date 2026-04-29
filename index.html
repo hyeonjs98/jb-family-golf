@@ -986,7 +986,7 @@ function renderHistory() {
   } else {
     // Individual history
     const rounds = DATA.rounds[historyPlayer]||[];
-    let html = `<button class="back-btn" onclick="historyPlayer=null;renderHistory();">&#9664; 전체 멤버</button>`;
+    let html = `<button class="back-btn" onclick="history.back();">&#9664; 전체 멤버</button>`;
     html += `<div style="font-size:1.1rem; font-weight:800; margin-bottom:14px;">${esc(historyPlayer)}의 기록</div>`;
     if (rounds.length===0) {
       html += '<div class="empty-state"><p>기록된 라운드가 없습니다.</p></div>';
@@ -1017,7 +1017,12 @@ function renderHistory() {
   }
 }
 
-function showPlayerHistory(name) { historyPlayer=name; renderHistory(); }
+function showPlayerHistory(name) {
+  historyPlayer=name; renderHistory();
+  pushingState=true;
+  history.pushState({tab:'history',player:name},'','#history-'+encodeURIComponent(name));
+  pushingState=false;
+}
 
 let detailState = { playerName:null, idx:null, editing:false };
 
@@ -1726,10 +1731,19 @@ window.addEventListener('popstate', function(e) {
     closeAllModals();
     return;
   }
+  // 기록 보기 내부: 개인 기록 → 전체 멤버
+  if (e.state && e.state.tab === 'history') {
+    historyPlayer = e.state.player || null;
+    switchTab('history', true);
+    renderHistory();
+    return;
+  }
   // 탭 복원
   if (e.state && e.state.tab) {
+    historyPlayer = null;
     switchTab(e.state.tab, true);
   } else {
+    historyPlayer = null;
     switchTab('overview', true);
   }
 });
