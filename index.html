@@ -672,7 +672,8 @@ function renderOverview() {
     return { name, avgOver, bestOver, hdcp, recentOver, gameScore, count: rounds.length };
   });
   // 게임 스코어 낮은 순 정렬
-  stats.sort((a,b) => a.gameScore - b.gameScore);
+  // 게임스코어 낮은 순, 동점시 핸디캡 낮은 순
+  stats.sort((a,b) => a.gameScore - b.gameScore || (a.hdcp||999) - (b.hdcp||999));
 
   stats.forEach((s, i) => {
     var hasData = s.count > 0 && s.gameScore !== 999;
