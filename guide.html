@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JB Family Golf - 사용 가이드</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family:'Segoe UI',-apple-system,sans-serif;
+    background:#f5f5f0; color:#212121; line-height:1.7;
+    max-width:700px; margin:0 auto; padding:20px 16px 60px;
+  }
+  .header {
+    background:linear-gradient(135deg,#1b5e20,#2e7d32);
+    color:#fff; padding:30px 24px; border-radius:16px;
+    text-align:center; margin-bottom:30px;
+  }
+  .header h1 { font-size:1.6rem; margin-bottom:4px; }
+  .header p { font-size:.9rem; opacity:.85; }
+  h2 {
+    font-size:1.15rem; color:#1b5e20; margin:28px 0 12px;
+    padding-bottom:8px; border-bottom:2px solid #c8e6c9;
+  }
+  h3 { font-size:1rem; color:#333; margin:18px 0 8px; }
+  p, li { font-size:.9rem; color:#424242; }
+  ul, ol { padding-left:20px; margin:8px 0; }
+  li { margin-bottom:6px; }
+  .card {
+    background:#fff; border-radius:12px; padding:18px;
+    box-shadow:0 2px 8px rgba(0,0,0,.06); margin:14px 0;
+  }
+  .highlight {
+    background:#e8f5e9; border-left:4px solid #2e7d32;
+    padding:12px 16px; border-radius:0 8px 8px 0; margin:12px 0;
+    font-size:.88rem;
+  }
+  .warning {
+    background:#fff3e0; border-left:4px solid #ef6c00;
+    padding:12px 16px; border-radius:0 8px 8px 0; margin:12px 0;
+    font-size:.88rem;
+  }
+  .danger {
+    background:#ffebee; border-left:4px solid #c62828;
+    padding:14px 16px; border-radius:0 8px 8px 0; margin:20px 0;
+    font-size:.9rem;
+  }
+  table {
+    width:100%; border-collapse:collapse; margin:10px 0;
+    font-size:.85rem;
+  }
+  th {
+    background:#2e7d32; color:#fff; padding:10px 8px;
+    text-align:center; font-weight:600;
+  }
+  td {
+    padding:8px; text-align:center;
+    border-bottom:1px solid #e0e0e0;
+  }
+  tr:nth-child(even) { background:#fafafa; }
+  .score-example {
+    display:flex; gap:4px; justify-content:center; margin:10px 0;
+    flex-wrap:wrap;
+  }
+  .score-example span {
+    width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+    border-radius:6px; font-weight:700; font-size:.85rem;
+  }
+  .se-birdie { background:#e1f5fe; color:#039be5; }
+  .se-par { background:#e8f5e9; color:#2e7d32; }
+  .se-bogey { background:#fffde7; color:#f57f17; }
+  .se-double { background:#fff3e0; color:#ef6c00; }
+  .se-triple { background:#ffebee; color:#c62828; }
+  code {
+    background:#f5f5f5; padding:2px 6px; border-radius:4px;
+    font-size:.85rem; font-weight:600;
+  }
+  .link-btn {
+    display:inline-block; background:#2e7d32; color:#fff;
+    padding:12px 28px; border-radius:10px; text-decoration:none;
+    font-weight:700; font-size:.95rem; margin:16px 0;
+  }
+  .members-grid {
+    display:grid; grid-template-columns:repeat(4, 1fr);
+    gap:8px; margin:12px 0;
+  }
+  .member-chip {
+    background:#fff; border:1.5px solid #c8e6c9; border-radius:8px;
+    padding:10px 6px; text-align:center;
+  }
+  .member-chip .name { font-weight:700; font-size:.9rem; }
+  .member-chip .hdcp { font-size:.75rem; color:#757575; margin-top:2px; }
+  .footer {
+    text-align:center; margin-top:40px; padding-top:20px;
+    border-top:1px solid #e0e0e0; color:#999; font-size:.8rem;
+  }
+  @media (max-width:480px) {
+    .members-grid { grid-template-columns:repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>JB Family Golf</h1>
+  <p>사용 가이드</p>
+</div>
+
+<a class="link-btn" href="https://hyeonjs98.github.io/jb-family-golf/" target="_blank">&#9971; 앱 바로가기</a>
+
+<!-- ───────────────────── -->
+<h2>1. 앱 소개</h2>
+<p>JB Family Golf는 우리 가족 골프 모임의 스코어를 기록하고, 개인별 성적 추이와 핸디캡을 관리하는 웹 앱입니다.</p>
+
+<div class="highlight">
+  <strong>주요 기능</strong><br>
+  - 전체 멤버 스코어 현황 한눈에 보기<br>
+  - 스코어카드 사진 촬영으로 자동 입력<br>
+  - 개인별 통계, 핸디캡 산출, 스코어 추이 차트<br>
+  - 라운드 기록 관리 (수정/삭제)
+</div>
+
+<h3>앱 화면 구성 (탭)</h3>
+<div class="card">
+  <table>
+    <tr><th>탭</th><th>설명</th></tr>
+    <tr><td><strong>스코어 현황</strong></td><td>전체 멤버의 핸디캡, 산출 핸디캡, 평균, 베스트, 라운드 수를 한눈에 비교합니다. 멤버 이름을 탭하면 개인 상세 통계(추이 차트, 스코어 분포)를 확인할 수 있습니다.</td></tr>
+    <tr><td><strong>기록 보기</strong></td><td>멤버 목록에서 개인을 선택하면 해당 멤버의 라운드 기록 목록이 표시됩니다. 각 라운드를 탭하면 홀별 스코어카드를 확인하고 수정/삭제가 가능합니다.</td></tr>
+    <tr><td><strong>스코어 입력</strong></td><td>스코어카드 사진 촬영으로 여러 명을 한번에 입력하거나, 수동으로 한 명씩 입력할 수 있습니다. 골프장을 선택하면 홀별 파가 자동으로 설정됩니다.</td></tr>
+    <tr><td><strong>&#9881; (설정)</strong></td><td>플레이어 이름/핸디캡 관리, 골프장/코스별 파 관리를 할 수 있습니다.</td></tr>
+  </table>
+</div>
+
+<!-- ───────────────────── -->
+<h2>2. 등록 멤버</h2>
+<div class="members-grid">
+  <div class="member-chip"><div class="name">정석</div><div class="hdcp">HDCP 16</div></div>
+  <div class="member-chip"><div class="name">슬기</div><div class="hdcp">HDCP 9</div></div>
+  <div class="member-chip"><div class="name">상훈</div><div class="hdcp">HDCP 16</div></div>
+  <div class="member-chip"><div class="name">문정</div><div class="hdcp">HDCP 20</div></div>
+  <div class="member-chip"><div class="name">제원</div><div class="hdcp">HDCP 16</div></div>
+  <div class="member-chip"><div class="name">수지</div><div class="hdcp">HDCP 32</div></div>
+  <div class="member-chip"><div class="name">종민</div><div class="hdcp">HDCP 18</div></div>
+  <div class="member-chip"><div class="name">지현</div><div class="hdcp">HDCP 30</div></div>
+</div>
+
+<!-- ───────────────────── -->
+<h2>3. 스코어 입력 방식</h2>
+
+<h3>핵심: 오버타수만 기록</h3>
+<p>실제 타수가 아닌 <strong>파 대비 오버타수</strong>만 기록합니다.</p>
+
+<table>
+  <tr><th>오버타수</th><th>의미</th><th>예시 (Par 4)</th></tr>
+  <tr><td><code>-1</code></td><td>Birdie</td><td>3타</td></tr>
+  <tr><td><code>0</code></td><td>Par</td><td>4타</td></tr>
+  <tr><td><code>1</code></td><td>Bogey</td><td>5타</td></tr>
+  <tr><td><code>2</code></td><td>Double Bogey</td><td>6타</td></tr>
+  <tr><td><code>3</code></td><td>Triple Bogey</td><td>7타</td></tr>
+</table>
+
+<div class="highlight">
+  <strong>예시)</strong> Par 4에서 6타를 쳤다면 → <code>2</code> 입력<br>
+  <strong>예시)</strong> Par 5에서 5타를 쳤다면 → <code>0</code> 입력<br>
+  <strong>예시)</strong> Par 3에서 2타를 쳤다면 → <code>-1</code> 입력
+</div>
+
+<p>입력된 오버타수는 자동으로 실제 스코어로 변환되어 저장됩니다.<br>
+(저장 스코어 = 해당 홀 Par + 오버타수)</p>
+
+<!-- ───────────────────── -->
+<h2>4. 스코어카드 사진으로 입력하기</h2>
+
+<p>가장 편한 입력 방법입니다. 라운드 후 스코어카드를 사진 찍으면 AI가 자동으로 인식합니다.</p>
+
+<h3>스코어카드 작성 규칙</h3>
+<div class="card">
+  <ol>
+    <li><strong>이름은 한글로</strong> 앱에 등록된 이름과 동일하게 적어주세요<br>
+      <span style="color:#2e7d32;">&#10003; 정석, 슬기, 상훈, 문정, 제원, 수지, 종민, 지현</span><br>
+      <span style="color:#c62828;">&#10007; JS, 정석이, Jung 등 다른 표기 사용 금지</span>
+    </li>
+    <li><strong>오버타수만 기록</strong><br>
+      각 홀에 실제 타수가 아닌 오버타수를 적어주세요
+    </li>
+    <li><strong>또박또박 적기</strong><br>
+      AI가 인식할 수 있도록 숫자를 깔끔하게 적어주세요
+    </li>
+  </ol>
+</div>
+
+<h3>스코어카드 작성 예시</h3>
+<div class="card" style="overflow-x:auto;">
+  <table style="min-width:400px;">
+    <tr>
+      <th style="text-align:left;">이름</th>
+      <th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th>
+    </tr>
+    <tr>
+      <td style="text-align:left; font-weight:700;">정석</td>
+      <td>1</td><td>0</td><td>2</td><td>1</td><td>0</td><td>1</td><td>2</td><td>0</td><td>1</td>
+    </tr>
+    <tr>
+      <td style="text-align:left; font-weight:700;">슬기</td>
+      <td>0</td><td>-1</td><td>1</td><td>0</td><td>0</td><td>1</td><td>0</td><td>-1</td><td>0</td>
+    </tr>
+    <tr>
+      <td style="text-align:left; font-weight:700;">상훈</td>
+      <td>1</td><td>1</td><td>2</td><td>0</td><td>1</td><td>1</td><td>2</td><td>1</td><td>0</td>
+    </tr>
+    <tr>
+      <td style="text-align:left; font-weight:700;">문정</td>
+      <td>2</td><td>1</td><td>3</td><td>1</td><td>2</td><td>1</td><td>2</td><td>1</td><td>2</td>
+    </tr>
+  </table>
+</div>
+
+<h3>입력 순서</h3>
+<div class="card">
+  <ol>
+    <li><strong>스코어 입력</strong> 탭 → <strong>촬영</strong> 또는 <strong>사진 선택</strong></li>
+    <li>AI가 인식한 결과 미리보기 확인</li>
+    <li><strong>골프장</strong>, <strong>코스(전반/후반)</strong>, <strong>날짜</strong> 선택</li>
+    <li>인식된 이름이 맞는지 확인 (드롭다운에서 변경 가능)</li>
+    <li>스코어가 잘못 인식되었으면 직접 수정</li>
+    <li><strong>일괄 저장</strong> 버튼 클릭</li>
+  </ol>
+</div>
+
+<div class="warning">
+  <strong>참고:</strong> 등록되지 않은 이름은 자동으로 건너뛰기 됩니다. 우리 멤버가 아닌 동반자의 스코어는 무시됩니다.
+</div>
+
+<!-- ───────────────────── -->
+<h2>5. 수동 입력</h2>
+<p>사진 인식이 어려운 경우 수동으로도 입력할 수 있습니다.</p>
+<div class="card">
+  <ol>
+    <li><strong>스코어 입력</strong> 탭 하단 수동 입력 영역</li>
+    <li><strong>기록 대상</strong> 멤버 선택</li>
+    <li><strong>날짜</strong> 선택</li>
+    <li><strong>골프장</strong> 선택 → 코스 자동 선택 → 파 자동 입력</li>
+    <li>각 홀에 <strong>오버타수</strong> 입력 (0 = Par)</li>
+    <li><strong>라운드 저장</strong> 클릭</li>
+  </ol>
+</div>
+<p>수동 입력은 <strong>한 명씩</strong> 저장합니다.</p>
+
+<!-- ───────────────────── -->
+<h2>6. 등록된 골프장</h2>
+
+<div class="card">
+  <h3 style="margin-top:0;">Horizon Hills G&CC</h3>
+  <table>
+    <tr><th>Hole</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>계</th></tr>
+    <tr><td><strong>Front 9</strong></td><td>4</td><td>5</td><td>3</td><td>4</td><td>4</td><td>5</td><td>4</td><td>3</td><td>4</td><td><strong>36</strong></td></tr>
+    <tr><td><strong>Back 9</strong></td><td>4</td><td>4</td><td>3</td><td>5</td><td>4</td><td>4</td><td>4</td><td>3</td><td>5</td><td><strong>36</strong></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">Kukup Golf Resort</h3>
+  <table>
+    <tr><th>Hole</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>계</th></tr>
+    <tr><td><strong>Front 9</strong></td><td>4</td><td>4</td><td>5</td><td>4</td><td>3</td><td>4</td><td>4</td><td>3</td><td>5</td><td><strong>36</strong></td></tr>
+    <tr><td><strong>Back 9</strong></td><td>5</td><td>4</td><td>4</td><td>3</td><td>4</td><td>4</td><td>3</td><td>4</td><td>5</td><td><strong>36</strong></td></tr>
+  </table>
+</div>
+
+<div class="card">
+  <h3 style="margin-top:0;">IOI Palm Villa (27홀 - 3코스 조합)</h3>
+  <table>
+    <tr><th>Hole</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th><th>8</th><th>9</th><th>계</th></tr>
+    <tr><td><strong>IOI</strong></td><td>5</td><td>4</td><td>3</td><td>4</td><td>4</td><td>4</td><td>3</td><td>4</td><td>5</td><td><strong>36</strong></td></tr>
+    <tr><td><strong>Palm</strong></td><td>4</td><td>5</td><td>3</td><td>4</td><td>4</td><td>3</td><td>4</td><td>3</td><td>6</td><td><strong>36</strong></td></tr>
+    <tr><td><strong>Putra</strong></td><td>4</td><td>4</td><td>3</td><td>4</td><td>5</td><td>4</td><td>4</td><td>3</td><td>4</td><td><strong>35</strong></td></tr>
+  </table>
+  <p style="font-size:.8rem; color:#757575; margin-top:8px;">* Palm 코스 9번홀은 말레이시아 최초 Par 6</p>
+</div>
+
+<!-- ───────────────────── -->
+<h2>7. 스코어 현황 보는 법</h2>
+
+<div class="card">
+  <table>
+    <tr><th>항목</th><th>설명</th></tr>
+    <tr><td><strong>핸디캡</strong></td><td>멤버간 합의된 핸디캡</td></tr>
+    <tr><td><strong>산출 핸디캡</strong></td><td>실제 기록 기반 자동 계산된 핸디캡</td></tr>
+    <tr><td><strong>평균</strong></td><td>전체 라운드 평균 오버타수</td></tr>
+    <tr><td><strong>베스트</strong></td><td>최저 오버타수 기록</td></tr>
+    <tr><td><strong>라운드</strong></td><td>기록된 총 라운드 수</td></tr>
+  </table>
+</div>
+
+<p><strong>순위 기준:</strong> (산출 핸디캡 - 합의 핸디캡) 값이 낮은 순서입니다.<br>
+합의된 핸디캡보다 실제 실력이 좋을수록 상위에 표시됩니다.</p>
+
+<p>멤버 이름을 <strong>클릭/탭</strong>하면 개인 상세 통계를 볼 수 있습니다.</p>
+
+<!-- ───────────────────── -->
+<h2>8. 산출 핸디캡 계산 방식</h2>
+
+<p>WHS(World Handicap System)를 단순화한 방식입니다.</p>
+
+<div class="card">
+  <ol>
+    <li>각 라운드의 <strong>총 오버타수</strong>를 구합니다</li>
+    <li>라운드 수에 따라 <strong>가장 좋은(낮은) 라운드만</strong> 선별합니다</li>
+    <li>선별된 라운드의 <strong>평균</strong>이 산출 핸디캡입니다</li>
+  </ol>
+
+  <table style="margin-top:12px;">
+    <tr><th>라운드 수</th><th>사용 개수</th></tr>
+    <tr><td>1 ~ 4</td><td>최저 1개 - 2</td></tr>
+    <tr><td>5</td><td>최저 1개</td></tr>
+    <tr><td>6 ~ 8</td><td>최저 2개</td></tr>
+    <tr><td>9 ~ 11</td><td>최저 3개</td></tr>
+    <tr><td>12 ~ 14</td><td>최저 4개</td></tr>
+    <tr><td>15 ~ 16</td><td>최저 5개</td></tr>
+    <tr><td>17 ~ 18</td><td>최저 6개</td></tr>
+    <tr><td>19</td><td>최저 7개</td></tr>
+    <tr><td>20+</td><td>최근 20개 중 최저 8개</td></tr>
+  </table>
+</div>
+
+<div class="highlight">
+  <strong>예시)</strong> 3라운드 기록: +22, +18, +25<br>
+  → 최저 1개 = +18, 거기서 -2 = <strong>산출 핸디캡 16</strong>
+</div>
+
+<!-- ───────────────────── -->
+<h2>9. 기록 수정/삭제</h2>
+<div class="card">
+  <ol>
+    <li><strong>기록 보기</strong> 탭 → 멤버 선택</li>
+    <li>수정할 라운드 클릭</li>
+    <li><strong>수정</strong> 버튼 → 오버타수 수정 → <strong>저장</strong></li>
+    <li>삭제가 필요하면 <strong>삭제</strong> 버튼</li>
+  </ol>
+</div>
+
+<!-- ───────────────────── -->
+<h2>10. 스코어 분포 색상</h2>
+<div class="score-example">
+  <span class="se-birdie">-1</span>
+  <span class="se-par">0</span>
+  <span class="se-bogey">1</span>
+  <span class="se-double">2</span>
+  <span class="se-triple">3+</span>
+</div>
+<table>
+  <tr><th>색상</th><th>구분</th><th>오버타수</th></tr>
+  <tr><td style="color:#039be5;">&#9632; 하늘색</td><td>Birdie</td><td>-1</td></tr>
+  <tr><td style="color:#2e7d32;">&#9632; 초록색</td><td>Par</td><td>0</td></tr>
+  <tr><td style="color:#f57f17;">&#9632; 노란색</td><td>Bogey</td><td>+1</td></tr>
+  <tr><td style="color:#ef6c00;">&#9632; 주황색</td><td>Double Bogey</td><td>+2</td></tr>
+  <tr><td style="color:#c62828;">&#9632; 빨간색</td><td>Triple+</td><td>+3 이상</td></tr>
+</table>
+
+<!-- ───────────────────── -->
+<div class="danger">
+  <strong>&#9888; 중요 공지</strong><br><br>
+  이 앱은 <strong>개인 API 키</strong>를 사용하여 운영되고 있으며, 사용량에 따라 <strong>개발자에게 비용이 발생</strong>합니다.<br><br>
+  <strong>&#10060; JB Family Golf 멤버 외 절대 공유 금지</strong><br>
+  <strong>&#10060; 앱 URL을 외부에 전달하지 마세요</strong><br>
+  <strong>&#10060; 스크린샷 등으로 URL이 노출되지 않도록 주의해주세요</strong><br><br>
+  모임 내에서만 사용해주시기 바랍니다. 감사합니다.
+</div>
+
+<div class="footer">
+  JB Family Golf &copy; 2025<br>
+  문의사항은 정석에게 연락해주세요.
+</div>
+
+</body>
+</html>
