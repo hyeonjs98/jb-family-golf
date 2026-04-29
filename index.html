@@ -1775,34 +1775,6 @@ if (/KAKAOTALK/i.test(navigator.userAgent)) {
   document.getElementById('kakaoAlert').style.display = 'block';
 }
 
-// ── 4/24 Kukup 라운드 일괄 입력 (1회성) ──
-(function(){
-  var KEY='kukup_0424_inserted';
-  if(localStorage.getItem(KEY)) return;
-  var kF=[4,4,5,4,3,4,4,3,5], kB=[5,4,4,3,4,4,3,4,5], pars=kF.concat(kB);
-  var d='2026-04-24', c='Kukup Golf Resort';
-  var p={
-    '제원':{f:[2,2,1,2,1,2,2,1,2],b:[2,1,2,1,2,1,2,1,1]},
-    '수지':{f:[3,2,2,2,2,2,3,1,2],b:[2,2,3,2,2,2,1,2,2]},
-    '상훈':{f:[2,1,2,1,2,1,2,0,2],b:[1,2,1,2,1,2,1,1,1]},
-    '문정':{f:[1,2,1,1,2,1,2,0,1],b:[2,1,1,2,1,2,1,1,1]},
-    '종민':{f:[2,1,2,2,1,2,1,2,2],b:[1,2,2,1,2,1,2,1,1]},
-    '지현':{f:[1,2,1,2,1,2,2,1,2],b:[2,1,1,2,1,2,1,2,0]},
-    '정석':{f:[2,1,2,1,1,2,1,1,2],b:[1,2,1,1,2,1,1,1,1]},
-    '슬기':{f:[1,0,1,1,0,1,1,0,2],b:[1,1,1,0,2,1,0,1,3]}
-  };
-  Object.keys(p).forEach(function(name){
-    var s=[];
-    for(var i=0;i<9;i++) s.push(kF[i]+p[name].f[i]);
-    for(var i=0;i<9;i++) s.push(kB[i]+p[name].b[i]);
-    if(!DATA.rounds[name]) DATA.rounds[name]=[];
-    DATA.rounds[name].push({date:d,course:c,frontCourse:'Front 9 (OUT)',backCourse:'Back 9 (IN)',pars:pars.slice(),scores:s,createdAt:Date.now()});
-    DATA.rounds[name].sort(function(a,b){return b.date.localeCompare(a.date)});
-  });
-  saveData();
-  localStorage.setItem(KEY,'1');
-})();
-
 renderAll();
 </script>
 </body>
