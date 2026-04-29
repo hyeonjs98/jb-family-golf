@@ -1329,9 +1329,11 @@ function importData(event){
   reader.readAsText(f); event.target.value='';
 }
 function resetData(){
-  if(!confirm('정말 모든 데이터를 초기화하시겠습니까?'))return;
-  if(!confirm('정말로요? 모든 플레이어와 기록이 삭제됩니다.'))return;
-  localStorage.removeItem(STORAGE_KEY); DATA=getDefaultData(); saveData(); renderAll();
+  if(!confirm('모든 라운드 기록을 초기화하시겠습니까?\n(멤버, 골프장, 핸디캡 정보는 유지됩니다)'))return;
+  if(!confirm('정말로요? 모든 라운드 기록이 삭제됩니다.'))return;
+  // 라운드 기록만 초기화, 나머지 유지
+  DATA.players.forEach(name => { DATA.rounds[name] = []; });
+  saveData(); renderAll();
 }
 
 // ══════════════════════════════════════
