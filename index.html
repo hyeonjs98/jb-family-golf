@@ -1486,7 +1486,7 @@ function showOcrPreview() {
       </div>
       <div class="form-group" style="flex:1; margin-bottom:8px;">
         <label style="font-size:.7rem;">날짜</label>
-        <input type="date" id="ocrDate" value="${ocrData.date || new Date().toISOString().slice(0,10)}" style="padding:8px 10px; font-size:.85rem;">
+        <input type="date" id="ocrDate" value="${new Date().toISOString().slice(0,10)}" style="padding:8px 10px; font-size:.85rem;">
       </div>
     </div>
     <div class="form-row" style="gap:8px;">
@@ -1524,7 +1524,7 @@ function showOcrPreview() {
       <div style="display:flex; align-items:center; gap:8px; margin-bottom:8px;">
         <span style="font-size:.8rem; color:var(--text-light); white-space:nowrap;">인식: <b>${esc(p.name)}</b> →</span>
         <select id="ocrPlayer${pi}" style="flex:1; padding:6px 8px; font-size:.85rem; font-weight:600;"
-          onchange="this.parentElement.parentElement.className='ocr-player-card '+(this.value?'matched':'unmatched')">
+          onchange="this.parentElement.parentElement.className='ocr-player-card '+(this.value?'matched':'unmatched');updateOcrSaveBtn()">
           ${playerOptions}
         </select>
       </div>
@@ -1543,22 +1543,32 @@ function showOcrPreview() {
     </div>`;
   });
 
-  // 매칭된 플레이어 자동 선택
+  document.getElementById('ocrPreview').innerHTML = html;
+  openModal('ocrModal');
+  // 매칭된 플레이어 자동 선택 후 버튼 업데이트
   setTimeout(() => {
     ocrData.players.forEach((p, pi) => {
-      const matched = DATA.players.find(rp =>
-        rp === p.name || p.name.includes(rp) || rp.includes(p.name)
-      );
-      if (matched) document.getElementById(`ocrPlayer${pi}`).value = matched;
+      var matched = DATA.players.find(rp => rp === p.name || p.name.includes(rp) || rp.includes(p.name));
+      var sel = document.getElementById('ocrPlayer' + pi);
+      if (matched && sel) {
+        sel.value = matched;
+        sel.parentElement.parentElement.className = 'ocr-player-card matched';
+      }
     });
+    updateOcrSaveBtn();
+    updateOcrCourseOptions();
   }, 50);
+}
 
-  document.getElementById('ocrPreview').innerHTML = html;
-  document.getElementById('ocrSaveBtn').textContent = `등록 멤버 ${matchCount}명 일괄 저장`;
-  document.getElementById('ocrSaveBtn').disabled = matchCount === 0;
-  openModal('ocrModal');
-  // 골프장 선택되어 있으면 코스 옵션 채우기
-  setTimeout(() => updateOcrCourseOptions(), 50);
+function updateOcrSaveBtn() {
+  if (!ocrData) return;
+  var count = 0;
+  for (var i = 0; i < ocrData.players.length; i++) {
+    var sel = document.getElementById('ocrPlayer' + i);
+    if (sel && sel.value) count++;
+  }
+  document.getElementById('ocrSaveBtn').textContent = '등록 멤버 ' + count + '명 일괄 저장';
+  document.getElementById('ocrSaveBtn').disabled = count === 0;
 }
 
 function updateOcrCourseOptions() {
