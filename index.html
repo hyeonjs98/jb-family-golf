@@ -320,16 +320,20 @@
 </head>
 <body>
 
+<div id="kakaoAlert" style="display:none; background:#fff3e0; color:#e65100; padding:12px 16px; text-align:center; font-size:.85rem; font-weight:600;">
+  &#9888; 카카오톡 브라우저에서는 일부 기능이 제한됩니다.<br>
+  <span style="font-weight:400;">우측 하단 <strong>&#8942;</strong> → <strong>다른 브라우저로 열기</strong>를 눌러주세요.</span>
+</div>
 <header>
   <h1>JB Family Golf</h1>
   <p>Score & Handicap Tracker</p>
 </header>
 
 <div class="tabs">
-  <button class="tab-btn active" data-tab="overview">스코어 현황</button>
-  <button class="tab-btn" data-tab="history">기록 보기</button>
-  <button class="tab-btn" data-tab="record">스코어 입력</button>
-  <button class="tab-settings" data-tab="settings" title="설정">&#9881;</button>
+  <button class="tab-btn active" onclick="switchTab('overview')" data-tab="overview">스코어 현황</button>
+  <button class="tab-btn" onclick="switchTab('history')" data-tab="history">기록 보기</button>
+  <button class="tab-btn" onclick="switchTab('record')" data-tab="record">스코어 입력</button>
+  <button class="tab-settings admin-only" onclick="switchTab('settings')" data-tab="settings" title="설정" style="display:none;">&#9881;</button>
 </div>
 
 <!-- 1. Overview -->
@@ -456,7 +460,7 @@
     <div id="courseSettingsList"></div>
     <button class="btn btn-outline btn-sm" style="width:100%; margin-top:8px;" onclick="openAddCourseModal()">+ 새 골프장 추가</button>
   </div>
-  <div class="card admin-only" style="display:none;">
+  <div class="card">
     <h3>스코어카드 인식 (Gemini API)</h3>
     <div class="form-group">
       <label>Gemini API Key</label>
@@ -467,7 +471,7 @@
       Google AI Studio에서 발급받은 Gemini API 키를 입력하면 스코어카드 사진 인식 기능을 사용할 수 있습니다.
     </p>
   </div>
-  <div class="card admin-only" style="display:none;">
+  <div class="card">
     <h3>데이터 관리</h3>
     <div style="display:flex; gap:8px; flex-wrap:wrap;">
       <button class="btn btn-outline btn-sm" onclick="exportData()">데이터 내보내기 (JSON)</button>
@@ -540,18 +544,21 @@
 // ══════════════════════════════════════
 // FIREBASE
 // ══════════════════════════════════════
-firebase.initializeApp({
-  apiKey: "AIzaSyDMvA3CsVNS6O17zrAfxPuRlzu-EIbD-P0",
-  authDomain: "jb-family-golf.firebaseapp.com",
-  databaseURL: "https://jb-family-golf-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "jb-family-golf",
-  storageBucket: "jb-family-golf.firebasestorage.app",
-  messagingSenderId: "1073812846696",
-  appId: "1:1073812846696:web:6437141a9be7f2b39ba3dd"
-});
-const db = firebase.database();
-let firebaseReady = false;
-let skipNextFirebaseUpdate = false;
+var db = null;
+var firebaseReady = false;
+var skipNextFirebaseUpdate = false;
+try {
+  firebase.initializeApp({
+    apiKey: "AIzaSyDMvA3CsVNS6O17zrAfxPuRlzu-EIbD-P0",
+    authDomain: "jb-family-golf.firebaseapp.com",
+    databaseURL: "https://jb-family-golf-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "jb-family-golf",
+    storageBucket: "jb-family-golf.firebasestorage.app",
+    messagingSenderId: "1073812846696",
+    appId: "1:1073812846696:web:6437141a9be7f2b39ba3dd"
+  });
+  db = firebase.database();
+} catch(e) { console.warn('Firebase 초기화 실패:', e); }
 
 // ══════════════════════════════════════
 // DATA LAYER
@@ -605,29 +612,31 @@ function loadData() {
 
 function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
-  // Firebase에 동기화
-  skipNextFirebaseUpdate = true;
-  db.ref('data').set(DATA).catch(err => console.warn('Firebase 저장 실패:', err));
+  if (db) {
+    skipNextFirebaseUpdate = true;
+    db.ref('data').set(DATA).catch(function(err) { console.warn('Firebase 저장 실패:', err); });
+  }
 }
 
 // Firebase 실시간 동기화
-db.ref('data').on('value', snapshot => {
-  const val = snapshot.val();
-  if (skipNextFirebaseUpdate) { skipNextFirebaseUpdate = false; return; }
-  if (val) {
-    if (!val.courses) val.courses = {};
-    if (!val.handicaps) val.handicaps = {};
-    if (!val.rounds) val.rounds = {};
-    if (!val.players) val.players = [...DEFAULT_PLAYERS];
-    DATA = val;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
-    if (firebaseReady) renderAll();
-  } else {
-    // Firebase 비어있음 → 기본 데이터 업로드
-    db.ref('data').set(DATA);
-  }
-  firebaseReady = true;
-});
+if (db) {
+  db.ref('data').on('value', function(snapshot) {
+    var val = snapshot.val();
+    if (skipNextFirebaseUpdate) { skipNextFirebaseUpdate = false; return; }
+    if (val) {
+      if (!val.courses) val.courses = {};
+      if (!val.handicaps) val.handicaps = {};
+      if (!val.rounds) val.rounds = {};
+      if (!val.players) val.players = DEFAULT_PLAYERS.slice();
+      DATA = val;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA));
+      if (firebaseReady) renderAll();
+    } else {
+      db.ref('data').set(DATA);
+    }
+    firebaseReady = true;
+  });
+}
 function esc(s) { const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
 function escAttr(s) { return s.replace(/'/g,"\\'").replace(/"/g,'&quot;'); }
 
@@ -1604,14 +1613,14 @@ function saveOcrRounds() {
 // ══════════════════════════════════════
 // TABS & MODAL
 // ══════════════════════════════════════
-document.querySelectorAll('.tab-btn, .tab-settings').forEach(btn=>{
-  btn.addEventListener('click',()=>{
-    document.querySelectorAll('.tab-btn, .tab-settings').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('sec-'+btn.dataset.tab).classList.add('active');
-  });
-});
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn, .tab-settings').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  var btn = document.querySelector('[data-tab="'+tab+'"]');
+  if(btn) btn.classList.add('active');
+  var sec = document.getElementById('sec-'+tab);
+  if(sec) sec.classList.add('active');
+}
 function openModal(id){document.getElementById(id).classList.add('show');}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 document.querySelectorAll('.modal-overlay').forEach(m=>{
@@ -1635,6 +1644,11 @@ function renderAll(){
   renderCourseSettingsList();
   // API 키 복원
   if(DATA.geminiApiKey) document.getElementById('geminiApiKey').value = DATA.geminiApiKey;
+}
+
+// 카카오톡 인앱 브라우저 감지
+if (/KAKAOTALK/i.test(navigator.userAgent)) {
+  document.getElementById('kakaoAlert').style.display = 'block';
 }
 
 renderAll();
