@@ -1405,12 +1405,35 @@ async function handleScorecardUpload(event) {
       reader.readAsDataURL(file);
     });
 
-    const prompt = `이 골프 스코어카드 사진을 분석해주세요.
+    // 멤버 이름 목록과 등록된 골프장 파 정보를 프롬프트에 포함
+    const memberNames = DATA.players.join(', ');
+    const courseInfo = Object.keys(DATA.courses).map(cn => {
+      const subs = Object.keys(DATA.courses[cn]).map(sn =>
+        sn + ': [' + DATA.courses[cn][sn].join(',') + ']'
+      ).join(', ');
+      return cn + ' - ' + subs;
+    }).join('\n');
 
-다음 JSON 형식으로 정확히 응답해주세요 (다른 텍스트 없이 JSON만):
+    const prompt = `골프 스코어카드 사진을 분석해서 JSON으로 추출해주세요.
+
+## 등록된 멤버 이름 (한글)
+${memberNames}
+- 스코어카드에 적힌 이름이 위 목록과 비슷하면 가장 가까운 이름으로 매칭해주세요
+- 위 목록에 없는 이름도 그대로 적어주세요
+
+## 등록된 골프장 및 코스별 Par
+${courseInfo}
+
+## 스코어 해석 규칙
+- 스코어카드에 적힌 숫자는 **오버타수** (파 대비)입니다
+- 0=Par, 1=Bogey, 2=Double Bogey, -1=Birdie
+- 만약 실제 타수(4,5,6...)로 보인다면 해당 홀의 Par를 빼서 오버타수로 변환
+- 아마추어 골퍼이므로 대부분 0~4 범위, 가끔 -1(Birdie)
+- 손글씨 숫자 판독 시: 1과 7 구분 주의, 0과 빈칸 구분 주의
+
+## 응답 형식 (JSON만, 다른 텍스트 없이)
 {
-  "course": "골프장 이름 (인식 가능하면)",
-  "date": "날짜 (인식 가능하면, YYYY-MM-DD 형식)",
+  "course": "골프장 이름 (인식 가능하면, 아니면 빈 문자열)",
   "players": [
     {
       "name": "플레이어 이름",
@@ -1419,14 +1442,9 @@ async function handleScorecardUpload(event) {
     }
   ]
 }
-
-중요 규칙:
-- 스코어는 각 홀의 오버타수(파 대비)로 기록되어 있을 수 있습니다 (0=Par, 1=Bogey, 2=Double 등)
-- 만약 실제 타수(예: 4, 5, 6...)로 적혀있다면, 파를 빼서 오버타수로 변환해주세요
-- 스코어카드에 Par 정보가 있으면 그걸 기준으로, 없으면 일반적인 파(대부분 4)를 기준으로 판단
-- 빈 칸이나 인식 불가한 홀은 null로 표시
-- front9, back9 배열은 반드시 9개씩
-- 이름이 안 보이면 "Player 1", "Player 2" 등으로 표기`;
+- front9, back9 배열은 반드시 각 9개
+- 인식 불가한 홀은 0으로 표시
+- 전반만 있거나 후반만 있으면 없는 쪽은 모두 0`;
 
     const resp = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
