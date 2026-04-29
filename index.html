@@ -1439,19 +1439,47 @@ async function handleScorecardUpload(event) {
 function showOcrPreview() {
   if (!ocrData || !ocrData.players) return;
 
-  const info = [];
-  if (ocrData.course) info.push(`골프장: ${ocrData.course}`);
-  if (ocrData.date) info.push(`날짜: ${ocrData.date}`);
-  document.getElementById('ocrInfo').textContent = info.join(' | ') || '골프장/날짜 정보 없음';
-
-  // Match course
+  // 골프장 매칭
   let matchedCourse = '';
   if (ocrData.course) {
     const courseNames = Object.keys(DATA.courses);
     matchedCourse = courseNames.find(c => ocrData.course.includes(c) || c.includes(ocrData.course)) || '';
   }
 
-  let html = '';
+  // 골프장/코스/날짜 선택 UI
+  const courseOptions = Object.keys(DATA.courses).map(c =>
+    `<option value="${esc(c)}" ${c===matchedCourse?'selected':''}>${esc(c)}</option>`
+  ).join('');
+
+  let html = `<div style="background:#f9fdf5; border-radius:8px; padding:12px; margin-bottom:14px;">
+    <div class="form-row" style="gap:8px;">
+      <div class="form-group" style="flex:1; margin-bottom:8px;">
+        <label style="font-size:.7rem;">골프장</label>
+        <select id="ocrCourse" onchange="updateOcrCourseOptions()" style="padding:8px 10px; font-size:.85rem;">
+          <option value="">-- 선택 --</option>${courseOptions}
+        </select>
+      </div>
+      <div class="form-group" style="flex:1; margin-bottom:8px;">
+        <label style="font-size:.7rem;">날짜</label>
+        <input type="date" id="ocrDate" value="${ocrData.date || new Date().toISOString().slice(0,10)}" style="padding:8px 10px; font-size:.85rem;">
+      </div>
+    </div>
+    <div class="form-row" style="gap:8px;">
+      <div class="form-group" style="flex:1; margin-bottom:0;">
+        <label style="font-size:.7rem;">코스 (전반)</label>
+        <select id="ocrFrontCourse" style="padding:8px 10px; font-size:.85rem;">
+          <option value="">-- 선택 --</option>
+        </select>
+      </div>
+      <div class="form-group" style="flex:1; margin-bottom:0;">
+        <label style="font-size:.7rem;">코스 (후반)</label>
+        <select id="ocrBackCourse" style="padding:8px 10px; font-size:.85rem;">
+          <option value="">-- 선택 --</option>
+        </select>
+      </div>
+    </div>
+  </div>`;
+
   let matchCount = 0;
 
   ocrData.players.forEach((p, pi) => {
@@ -1491,29 +1519,42 @@ function showOcrPreview() {
   document.getElementById('ocrSaveBtn').textContent = `등록 멤버 ${matchCount}명 일괄 저장`;
   document.getElementById('ocrSaveBtn').disabled = matchCount === 0;
   openModal('ocrModal');
+  // 골프장 선택되어 있으면 코스 옵션 채우기
+  setTimeout(() => updateOcrCourseOptions(), 50);
+}
+
+function updateOcrCourseOptions() {
+  const courseName = document.getElementById('ocrCourse').value;
+  const fSel = document.getElementById('ocrFrontCourse');
+  const bSel = document.getElementById('ocrBackCourse');
+  fSel.innerHTML = '<option value="">-- 선택 --</option>';
+  bSel.innerHTML = '<option value="">-- 선택 --</option>';
+  if (courseName && DATA.courses[courseName]) {
+    const subs = Object.keys(DATA.courses[courseName]);
+    subs.forEach(n => {
+      fSel.innerHTML += `<option value="${esc(n)}">${esc(n)}</option>`;
+      bSel.innerHTML += `<option value="${esc(n)}">${esc(n)}</option>`;
+    });
+    if (subs.length >= 2) { fSel.value = subs[0]; bSel.value = subs[1]; }
+    else if (subs.length === 1) { fSel.value = subs[0]; bSel.value = subs[0]; }
+  }
 }
 
 function saveOcrRounds() {
   if (!ocrData || !ocrData.players) return;
 
-  const date = ocrData.date || new Date().toISOString().slice(0, 10);
+  const date = document.getElementById('ocrDate').value || new Date().toISOString().slice(0, 10);
+  const courseName = document.getElementById('ocrCourse').value || ocrData.course || '미입력';
+  const frontCourse = document.getElementById('ocrFrontCourse').value || '';
+  const backCourse = document.getElementById('ocrBackCourse').value || '';
   let savedCount = 0;
 
-  // Try to match course and get pars
-  let courseName = '', frontCourse = '', backCourse = '', pars = Array(18).fill(4);
-  if (ocrData.course) {
-    const courseNames = Object.keys(DATA.courses);
-    courseName = courseNames.find(c => ocrData.course.includes(c) || c.includes(ocrData.course)) || ocrData.course;
-    if (DATA.courses[courseName]) {
-      const subs = Object.keys(DATA.courses[courseName]);
-      if (subs.length >= 2) {
-        frontCourse = subs[0]; backCourse = subs[1];
-        pars = [...DATA.courses[courseName][subs[0]], ...DATA.courses[courseName][subs[1]]];
-      } else if (subs.length === 1) {
-        frontCourse = subs[0]; backCourse = subs[0];
-        pars = [...DATA.courses[courseName][subs[0]], ...DATA.courses[courseName][subs[0]]];
-      }
-    }
+  // 선택된 코스에서 파 가져오기
+  let pars = Array(18).fill(4);
+  if (DATA.courses[courseName]) {
+    const fp = frontCourse && DATA.courses[courseName][frontCourse] ? DATA.courses[courseName][frontCourse] : Array(9).fill(4);
+    const bp = backCourse && DATA.courses[courseName][backCourse] ? DATA.courses[courseName][backCourse] : Array(9).fill(4);
+    pars = [...fp, ...bp];
   }
 
   ocrData.players.forEach(p => {
