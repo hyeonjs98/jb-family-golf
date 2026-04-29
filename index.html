@@ -770,7 +770,7 @@ function showPlayerStats(name) {
     // Score trend
     if (n >= 2) {
       html += '<div style="font-weight:700; font-size:.85rem; margin-bottom:4px;">스코어 추이</div>';
-      html += `<div class="chart-container"><svg class="chart-svg" id="modalTrendChart"></svg></div>`;
+      html += `<div style="width:100%; height:200px; margin:12px 0;"><svg id="modalTrendChart" style="width:100%; height:100%; display:block;"></svg></div>`;
     }
 
     // Score distribution
@@ -802,9 +802,9 @@ function showPlayerStats(name) {
   document.getElementById('playerStatsContent').innerHTML = html;
   openModal('playerStatsModal');
 
-  // Render chart after DOM update
+  // Render chart after modal is fully visible
   if (rounds.length >= 2) {
-    setTimeout(() => renderTrendChart(rounds, 'modalTrendChart'), 50);
+    setTimeout(function(){ renderTrendChart(rounds, 'modalTrendChart'); }, 300);
   }
 }
 
